@@ -4,31 +4,63 @@ import { useEffect, useRef, useState } from "react";
 import { useScroll, useTransform, useMotionValueEvent, motion } from "framer-motion";
 
 export default function ScrollyCanvas() {
+  const frameCount = 82;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [images, setImages] = useState<HTMLImageElement[]>([]);
+  const [images, setImages] = useState<(HTMLImageElement | null)[]>(new Array(frameCount).fill(null));
   const [loadedCount, setLoadedCount] = useState(0);
-  const frameCount = 82;
+  const initialBatchSize = 10;
 
   useEffect(() => {
-    const loadedImages: HTMLImageElement[] = new Array(frameCount);
-    let count = 0;
+    let mounted = true;
 
-    for (let i = 0; i < frameCount; i++) {
-      const img = new Image();
-      const frameNum = i.toString().padStart(3, "0");
-      img.src = `/sequence/frame_${frameNum}_delay-0.066s.png`;
+    const loadImage = (index: number) => {
+      return new Promise<void>((resolve) => {
+        const img = new Image();
+        const frameNum = index.toString().padStart(3, "0");
+        img.src = `/sequence/frame_${frameNum}_delay-0.066s.png`;
 
-      const onSettle = () => {
-        count++;
-        setLoadedCount(count);
-        if (count === frameCount) setImages([...loadedImages]);
-      };
+        img.onload = () => {
+          if (!mounted) return;
+          setImages((prev) => {
+            const next = [...prev];
+            next[index] = img;
+            return next;
+          });
+          setLoadedCount((count) => count + 1);
+          resolve();
+        };
 
-      img.onload = onSettle;
-      img.onerror = onSettle;
-      loadedImages[i] = img;
-    }
+        img.onerror = () => {
+          console.error(`Failed to load frame ${index}`);
+          resolve();
+        };
+      });
+    };
+
+    const loadSequence = async () => {
+      // Load initial batch sequentially for fast first paint
+      for (let i = 0; i < initialBatchSize; i++) {
+        if (!mounted) return;
+        await loadImage(i);
+      }
+
+      // Load remaining frames in small batches to avoid network congestion
+      const remainingIndices = Array.from({ length: frameCount - initialBatchSize }, (_, i) => i + initialBatchSize);
+      const batchSize = 5;
+
+      for (let i = 0; i < remainingIndices.length; i += batchSize) {
+        if (!mounted) return;
+        const batch = remainingIndices.slice(i, i + batchSize);
+        await Promise.all(batch.map(loadImage));
+      }
+    };
+
+    loadSequence();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const { scrollYProgress } = useScroll({
@@ -36,7 +68,7 @@ export default function ScrollyCanvas() {
     offset: ["start start", "end end"],
   });
 
-  const drawImage = (img: HTMLImageElement, ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
+  const drawImage = (img: HTMLImageElement | null, ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
     if (!img || !img.complete || img.naturalWidth === 0) return;
     const canvasRatio = canvas.width / canvas.height;
     const imgRatio = img.width / img.height;
@@ -56,12 +88,15 @@ export default function ScrollyCanvas() {
   };
 
   useEffect(() => {
-    if (images.length === 0 || !canvasRef.current) return;
+    if (!canvasRef.current) return;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    if (ctx) drawImage(images[0], ctx, canvas);
+
+    // Draw the first available image
+    const firstAvailable = images.find(img => img !== null);
+    if (ctx && firstAvailable) drawImage(firstAvailable, ctx, canvas);
 
     const handleResize = () => {
       if (!canvasRef.current) return;
@@ -69,8 +104,21 @@ export default function ScrollyCanvas() {
       const cx = c.getContext("2d");
       c.width = window.innerWidth;
       c.height = window.innerHeight;
-      const frame = Math.min(frameCount - 1, Math.floor(scrollYProgress.get() * frameCount));
-      if (cx) drawImage(images[frame], cx, c);
+      
+      const progress = scrollYProgress.get();
+      const frameIndex = Math.min(frameCount - 1, Math.floor(progress * frameCount));
+      
+      // Fallback to closest loaded frame if current isn't loaded
+      let frameToDraw = images[frameIndex];
+      if (!frameToDraw) {
+        // Find nearest loaded frame
+        for (let i = 1; i < frameCount; i++) {
+          if (images[frameIndex - i]) { frameToDraw = images[frameIndex - i]; break; }
+          if (images[frameIndex + i]) { frameToDraw = images[frameIndex + i]; break; }
+        }
+      }
+
+      if (cx && frameToDraw) drawImage(frameToDraw, cx, c);
     };
 
     window.addEventListener("resize", handleResize);
@@ -82,11 +130,21 @@ export default function ScrollyCanvas() {
   }, [images, scrollYProgress]);
 
   useMotionValueEvent(scrollYProgress, "change", (progress) => {
-    if (images.length === 0 || !canvasRef.current) return;
+    if (!canvasRef.current) return;
     const frameIndex = Math.min(frameCount - 1, Math.floor(progress * frameCount));
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-    if (ctx && images[frameIndex]) drawImage(images[frameIndex], ctx, canvas);
+    
+    // Find nearest loaded frame if the target one isn't ready
+    let frameToDraw = images[frameIndex];
+    if (!frameToDraw) {
+      for (let i = 1; i < frameCount; i++) {
+        if (frameIndex - i >= 0 && images[frameIndex - i]) { frameToDraw = images[frameIndex - i]; break; }
+        if (frameIndex + i < frameCount && images[frameIndex + i]) { frameToDraw = images[frameIndex + i]; break; }
+      }
+    }
+
+    if (ctx && frameToDraw) drawImage(frameToDraw, ctx, canvas);
   });
 
   // Overlay transforms — same values as before, now using the correct containerRef progress
@@ -154,10 +212,19 @@ export default function ScrollyCanvas() {
 
         </div>
 
-        {/* Loading indicator */}
+        {/* Progressive Loading Progress (Subtle) */}
         {loadedCount < frameCount && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-50 text-foreground font-mono">
-            Loading... {loadedCount}/{frameCount}
+          <div className="absolute bottom-4 right-4 z-50 flex flex-col items-end gap-1 opacity-50 hover:opacity-100 transition-opacity">
+            <div className="text-[10px] font-mono text-foreground/70 uppercase tracking-widest">
+              Optimizing Experience {Math.round((loadedCount / frameCount) * 100)}%
+            </div>
+            <div className="w-32 h-[2px] bg-foreground/10 rounded-full overflow-hidden">
+              <motion.div 
+                className="h-full bg-blue-500"
+                initial={{ width: 0 }}
+                animate={{ width: `${(loadedCount / frameCount) * 100}%` }}
+              />
+            </div>
           </div>
         )}
       </div>
