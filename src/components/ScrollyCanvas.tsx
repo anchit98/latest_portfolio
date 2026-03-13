@@ -11,6 +11,9 @@ export default function ScrollyCanvas() {
   const [loadedCount, setLoadedCount] = useState(0);
   const initialBatchSize = 10;
 
+  const layoutRef = useRef({ drawWidth: 0, drawHeight: 0, offsetX: 0, offsetY: 0 });
+  const lastFrameIndexRef = useRef<number>(0);
+
   useEffect(() => {
     let mounted = true;
 
@@ -20,14 +23,23 @@ export default function ScrollyCanvas() {
         const frameNum = index.toString().padStart(3, "0");
         img.src = `/sequence/frame_${frameNum}_delay-0.066s.png`;
 
-        img.onload = () => {
+        img.onload = async () => {
           if (!mounted) return;
-          setImages((prev) => {
-            const next = [...prev];
-            next[index] = img;
-            return next;
-          });
-          setLoadedCount((count) => count + 1);
+          try {
+            // Asynchronously decode the image before adding it to state
+            // This prevents the main thread from blocking during scroll
+            await img.decode();
+            if (!mounted) return;
+            
+            setImages((prev) => {
+              const next = [...prev];
+              next[index] = img;
+              return next;
+            });
+            setLoadedCount((count) => count + 1);
+          } catch (e) {
+            console.error(`Failed to decode frame ${index}`, e);
+          }
           resolve();
         };
 
@@ -45,7 +57,7 @@ export default function ScrollyCanvas() {
         await loadImage(i);
       }
 
-      // Load remaining frames in small batches to avoid network congestion
+      // Load remaining frames in batches
       const remainingIndices = Array.from({ length: frameCount - initialBatchSize }, (_, i) => i + initialBatchSize);
       const batchSize = 5;
 
@@ -68,8 +80,7 @@ export default function ScrollyCanvas() {
     offset: ["start start", "end end"],
   });
 
-  const drawImage = (img: HTMLImageElement | null, ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
-    if (!img || !img.complete || img.naturalWidth === 0) return;
+  const updateLayout = (canvas: HTMLCanvasElement, img: HTMLImageElement) => {
     const canvasRatio = canvas.width / canvas.height;
     const imgRatio = img.width / img.height;
     const isMobile = window.innerWidth < 768;
@@ -82,7 +93,22 @@ export default function ScrollyCanvas() {
       drawWidth = canvas.height * imgRatio;
       offsetX = (canvas.width - drawWidth) / 2;
     }
+    
+    layoutRef.current = { drawWidth, drawHeight, offsetX, offsetY };
+  };
 
+  const drawImage = (img: HTMLImageElement | null, ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
+    if (!img || !img.complete || img.naturalWidth === 0) return;
+    
+    // Only update layout if dimensions are 0 (first draw)
+    if (layoutRef.current.drawWidth === 0) {
+      updateLayout(canvas, img);
+    }
+
+    const { drawWidth, drawHeight, offsetX, offsetY } = layoutRef.current;
+    
+    // We don't always need clearRect if the image covers the full viewport area
+    // but clearing ensures no ghosting on resize or mobile orientation shifts
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
   };
@@ -90,33 +116,26 @@ export default function ScrollyCanvas() {
   useEffect(() => {
     if (!canvasRef.current) return;
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { alpha: false }); // Optimization for non-transparent backgrounds
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    
+    // Reset layout on resize
+    layoutRef.current.drawWidth = 0;
 
-    // Draw the first available image
-    const firstAvailable = images.find(img => img !== null);
+    const firstAvailable = images[0] || images.find(img => img !== null);
     if (ctx && firstAvailable) drawImage(firstAvailable, ctx, canvas);
 
     const handleResize = () => {
       if (!canvasRef.current) return;
       const c = canvasRef.current;
-      const cx = c.getContext("2d");
+      const cx = c.getContext("2d", { alpha: false });
       c.width = window.innerWidth;
       c.height = window.innerHeight;
+      layoutRef.current.drawWidth = 0; // Trigger layout update on next draw
       
-      const progress = scrollYProgress.get();
-      const frameIndex = Math.min(frameCount - 1, Math.floor(progress * frameCount));
-      
-      // Fallback to closest loaded frame if current isn't loaded
-      let frameToDraw = images[frameIndex];
-      if (!frameToDraw) {
-        // Find nearest loaded frame
-        for (let i = 1; i < frameCount; i++) {
-          if (images[frameIndex - i]) { frameToDraw = images[frameIndex - i]; break; }
-          if (images[frameIndex + i]) { frameToDraw = images[frameIndex + i]; break; }
-        }
-      }
+      const frameIndex = Math.min(frameCount - 1, Math.floor(scrollYProgress.get() * frameCount));
+      let frameToDraw = images[frameIndex] || images[lastFrameIndexRef.current];
 
       if (cx && frameToDraw) drawImage(frameToDraw, cx, c);
     };
@@ -132,19 +151,26 @@ export default function ScrollyCanvas() {
   useMotionValueEvent(scrollYProgress, "change", (progress) => {
     if (!canvasRef.current) return;
     const frameIndex = Math.min(frameCount - 1, Math.floor(progress * frameCount));
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
     
-    // Find nearest loaded frame if the target one isn't ready
+    // Skip draw if it's the same frame as last time
+    if (frameIndex === lastFrameIndexRef.current && images[frameIndex]) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d", { alpha: false });
+    
     let frameToDraw = images[frameIndex];
     if (!frameToDraw) {
-      for (let i = 1; i < frameCount; i++) {
+      // Find nearest loaded frame efficiently (search outwards from target)
+      for (let i = 1; i < 20; i++) { // Limit search range for performance
         if (frameIndex - i >= 0 && images[frameIndex - i]) { frameToDraw = images[frameIndex - i]; break; }
         if (frameIndex + i < frameCount && images[frameIndex + i]) { frameToDraw = images[frameIndex + i]; break; }
       }
     }
 
-    if (ctx && frameToDraw) drawImage(frameToDraw, ctx, canvas);
+    if (ctx && frameToDraw) {
+      drawImage(frameToDraw, ctx, canvas);
+      lastFrameIndexRef.current = frameIndex;
+    }
   });
 
   // Overlay transforms — same values as before, now using the correct containerRef progress
