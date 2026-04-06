@@ -1,18 +1,17 @@
 "use client";
 
-import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { Sun, Moon, ArrowUpRight, Menu, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { ArrowUpRight, Menu, X } from "lucide-react";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 
 export default function Header() {
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+
+  const { scrollY } = useScroll();
+
+  // Transition the header from a gradient hero state to a solid black state as we leave the 500vh hero section.
+  const solidBgOpacity = useTransform(scrollY, [4800, 5000], [0, 1]);
 
   const handleScrollTo = (id: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -23,13 +22,21 @@ export default function Header() {
     }
   };
 
+
   return (
     <motion.header
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8 }}
-      className="relative inset-x-0 z-50 px-6 py-8 md:px-12 flex items-center justify-between text-foreground bg-black"
+      className="fixed top-0 inset-x-0 z-50 px-6 py-6 md:px-12 flex items-center justify-between text-foreground backdrop-blur-[2px] transition-all duration-500"
     >
+      {/* Dynamic Background Layers */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-black/80 to-transparent -z-10" />
+      <motion.div
+        style={{ opacity: solidBgOpacity }}
+        className="absolute inset-0 bg-black -z-10 shadow-2xl"
+      />
+
+
+
+
       {/* Initials */}
       <div
         className="text-3xl font-bold tracking-tighter cursor-pointer pm-glass-hover z-50"
@@ -55,27 +62,20 @@ export default function Header() {
         </nav>
 
         <a
-          href="https://drive.google.com/"
+          href="https://drive.google.com/file/d/1bNt2ZAid8TBx8o7Vl5tIOGQKbAUJG1B6/view?usp=sharing"
           target="_blank"
           rel="noopener noreferrer"
           className="hidden sm:flex group relative items-center gap-2 px-5 py-2.5 border border-white/30 rounded-full text-sm font-medium hover:bg-white hover:text-black hover:shadow-[0_0_20px_rgba(255,255,255,0.4)] transition-all duration-300 backdrop-blur-md"
+          aria-label="View Resume (opens in new tab)"
         >
           Resume
           <ArrowUpRight className="w-4 h-4 group-hover:rotate-45 transition-transform duration-300" />
         </a>
 
-        {mounted && (
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="p-2.5 rounded-full border border-white/30 hover:bg-white hover:text-black hover:shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all duration-300 backdrop-blur-md"
-            aria-label="Toggle Theme"
-          >
-            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
-        )}
+
 
         {/* Hamburger Menu Button */}
-        <button 
+        <button
           className="md:hidden p-2.5 rounded-full border border-white/30 z-50 transition-all active:scale-95"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
@@ -98,13 +98,14 @@ export default function Header() {
               <a href="#work" onClick={(e) => handleScrollTo('work', e)} className="py-3 px-6 hover:bg-white/10 transition-colors text-neutral-400 hover:text-white">Work</a>
               <a href="#contact" onClick={(e) => handleScrollTo('contact', e)} className="py-3 px-6 hover:bg-white/10 transition-colors text-neutral-400 hover:text-white">Contact</a>
             </nav>
-            
+
             <div className="px-4 py-3 border-t border-white/5 mt-1">
               <a
-                href="https://drive.google.com/"
+                href="https://drive.google.com/file/d/1bNt2ZAid8TBx8o7Vl5tIOGQKbAUJG1B6/view?usp=sharing"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group flex items-center justify-between w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-medium hover:bg-white hover:text-black transition-all duration-300"
+                aria-label="View Resume (opens in new tab)"
               >
                 Resume
                 <ArrowUpRight className="w-3 h-3 group-hover:rotate-45 transition-transform duration-300" />

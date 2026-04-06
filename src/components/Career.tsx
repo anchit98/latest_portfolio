@@ -59,9 +59,9 @@ export default function Career() {
           <h2 className="text-4xl md:text-6xl font-bold tracking-tighter drop-shadow-md text-foreground">
             The Epic Saga of Doing Things for Money
           </h2>
-          <p className="mt-4 text-lg font-light text-foreground/60 max-w-lg mx-auto md:mx-0">
-            A roadmap of strategy, discovery, and execution mapped over the years.
-          </p>
+          <h4 className="mt-4 text-lg font-light text-foreground/60 max-w-lg mx-auto md:mx-0">
+            Strategy, discovery, and execution mapped over the years.
+          </h4>
         </div>
 
         {/* Horizontal Static Roadmap */}
@@ -74,7 +74,11 @@ export default function Career() {
             const floatDelay = randomDelays[idx] || 0;
 
             return (
-              <div key={idx} className="relative w-full md:w-1/4 flex-shrink-0 z-10 flex flex-col items-center md:items-start pt-20 md:pt-0 text-center md:text-left">
+              <article 
+                key={idx} 
+                className="relative w-full md:w-1/4 flex-shrink-0 z-10 flex flex-col items-center md:items-start pt-20 md:pt-0 text-center md:text-left"
+                aria-label={`Career milestone: ${item.role} at ${item.company}`}
+              >
 
                 {/* Floating Logo Bubble (Desktop Top / Mobile Top-Center) */}
                 <motion.div
@@ -88,17 +92,19 @@ export default function Career() {
                     scale: { type: "spring", stiffness: 300, damping: 15 }
                   }}
                   className={`absolute top-4 md:-top-16 left-1/2 -translate-x-1/2 md:left-6 md:translate-x-0 w-14 h-14 md:w-16 md:h-16 rounded-full shadow-xl backdrop-blur-md flex items-center justify-center border border-foreground/10 ${item.logoColor} z-20 cursor-pointer overflow-hidden p-2`}
+                  role="img"
+                  aria-label={`${item.company} logo`}
                 >
-                  <img src={item.logo} alt={item.company} className="w-full h-full object-contain" />
+                  <img src={item.logo} alt={`${item.company} branding`} className="w-full h-full object-contain" />
                 </motion.div>
 
                 {/* Marker Node on the line */}
-                <div className="absolute hidden md:block top-[22px] left-8 w-4 h-4 -ml-2 -mt-2 rounded-full border-[3px] border-background bg-foreground shadow-[0_0_10px_rgba(255,255,255,0.2)] z-10" />
+                <div className="absolute hidden md:block top-[22px] left-8 w-4 h-4 -ml-2 -mt-2 rounded-full border-[3px] border-background bg-foreground shadow-[0_0_10px_rgba(255,255,255,0.2)] z-10" aria-hidden="true" />
 
                 {/* Content Card */}
                 <div className="pt-4 md:pt-16 px-4 md:px-0">
                   <div className="text-xs font-bold text-foreground/40 mb-1 tracking-widest uppercase">
-                    {item.year}
+                    <time dateTime={item.year.replace("'", " ")}>{item.year}</time>
                   </div>
                   <h3 className="text-xl md:text-2xl font-bold text-foreground mb-1 leading-tight">{item.role}</h3>
                   <div className="text-sm font-medium text-foreground/80 mb-3">{item.company}</div>
@@ -107,9 +113,10 @@ export default function Career() {
                   </p>
                 </div>
 
-              </div>
+              </article>
             );
           })}
+
         </div>
 
       </div>

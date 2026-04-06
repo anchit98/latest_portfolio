@@ -117,12 +117,20 @@ export default function TechStack() {
                   opacity: { duration: 0.5, delay: idx * 0.1 },
                   scale: { duration: 0.5, delay: idx * 0.1, type: "spring" }
                 }}
-                className={`w-20 h-20 md:w-24 md:h-24 rounded-full bg-foreground/5 border border-foreground/10 backdrop-blur-md cursor-pointer hover:scale-110 transition-transform shadow-[0_4px_30px_rgba(0,0,0,0.1)] pm-glass-hover flex items-center justify-center`}
-                title={tech.name}
+                className={`w-20 h-20 md:w-24 md:h-24 rounded-full border backdrop-blur-md cursor-pointer hover:scale-110 transition-transform shadow-[0_4px_30px_rgba(0,0,0,0.1)] pm-glass-hover flex items-center justify-center ${
+                  tech.name === "Miro" 
+                    ? "bg-white/90 backdrop-blur-2xl border-white/50 shadow-[inset_0_0_20px_rgba(255,255,255,1),0_8px_32px_0_rgba(255,255,255,0.2)]" 
+                    : "bg-foreground/5 border-foreground/10"
+                }`}
+
+                role="img"
+                aria-label={tech.name}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={tech.icon} alt={tech.name} className="w-10 h-10 md:w-12 md:h-12 object-contain filter drop-shadow-md" />
+                <img src={tech.icon} alt={`${tech.name} icon`} className="w-10 h-10 md:w-12 md:h-12 object-contain filter drop-shadow-md" />
               </motion.div>
+
+
             );
           })}
         </div>

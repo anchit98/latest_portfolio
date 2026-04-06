@@ -15,7 +15,7 @@ export default function ChatBot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Hi! I'm Anchit's AI assistant. Ask me anything about his work, experience, or skills!",
+      content: "Hi! I'm Anchit's digital twin—his professional consciousness running on silicon. Ask me anything about my work, PM philosophy, or the saga of how I build products!",
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
@@ -73,27 +73,33 @@ export default function ChatBot() {
             {/* Header */}
             <div className="p-4 border-b border-foreground/10 bg-foreground/5 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-foreground/10 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-foreground/10 flex items-center justify-center" aria-hidden="true">
                   <Bot className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm">Portfolio Assistant</h3>
+                  <h3 className="font-bold text-sm">Anchit's Digital Twin</h3>
                   <p className="text-[10px] text-foreground/50 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                    Online
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" aria-hidden="true" />
+                    Strategic Mode Active
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
                 className="p-1 hover:bg-foreground/10 rounded-full transition-colors"
+                aria-label="Close chat"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth no-scrollbar">
+            <div 
+              className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth no-scrollbar"
+              role="log"
+              aria-live="polite"
+              aria-label="Chat messages"
+            >
               {messages.map((msg, idx) => (
                 <div
                   key={idx}
@@ -105,15 +111,16 @@ export default function ChatBot() {
                         ? "bg-foreground text-background rounded-tr-none"
                         : "bg-foreground/5 border border-foreground/10 rounded-tl-none"
                     }`}
+                    aria-label={`${msg.role === "user" ? "You" : "Anchit's Twin"} said:`}
                   >
                     {msg.content}
                   </div>
                 </div>
               ))}
               {isLoading && (
-                <div className="flex justify-start">
+                <div className="flex justify-start" aria-label="Anchit's Twin is thinking">
                   <div className="bg-foreground/5 border border-foreground/10 p-3 rounded-2xl rounded-tl-none">
-                    <Loader2 className="w-4 h-4 animate-spin text-foreground/50" />
+                    <Loader2 className="w-4 h-4 animate-spin text-foreground/50" aria-hidden="true" />
                   </div>
                 </div>
               )}
@@ -121,21 +128,24 @@ export default function ChatBot() {
             </div>
 
             {/* Input */}
-            <form onSubmit={handleSubmit} className="p-4 border-t border-foreground/10 bg-foreground/5">
+            <form onSubmit={handleSubmit} className="p-4 border-t border-foreground/10 bg-foreground/5" aria-label="Send message">
               <div className="relative">
                 <input
+                  id="chat-input"
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Ask a question..."
+                  aria-label="Ask a question"
                   className="w-full bg-background border border-foreground/10 rounded-xl py-2 px-4 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20 transition-all"
                 />
                 <button
                   type="submit"
                   disabled={!input.trim() || isLoading}
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-foreground/50 hover:text-foreground disabled:opacity-30 transition-colors"
+                  aria-label="Send message"
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="w-4 h-4" aria-hidden="true" />
                 </button>
               </div>
             </form>
@@ -152,9 +162,11 @@ export default function ChatBot() {
             ? "bg-foreground text-background rotate-90" 
             : "bg-blue-600 text-white hover:bg-blue-500 shadow-blue-500/20"
         }`}
+        aria-label={isOpen ? "Close chat assistant" : "Open chat assistant"}
       >
-        {isOpen ? <X className="w-6 h-6" /> : <MessageSquare className="w-6 h-6 fill-current" />}
+        {isOpen ? <X className="w-6 h-6" aria-hidden="true" /> : <MessageSquare className="w-6 h-6 fill-current" aria-hidden="true" />}
       </motion.button>
+
     </div>
   );
 }

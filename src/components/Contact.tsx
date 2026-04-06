@@ -71,9 +71,9 @@ export default function Contact() {
             transition={{ delay: 0.2 }}
             className="w-full md:w-[400px] flex flex-col justify-center gap-8 bg-foreground/5 backdrop-blur-2xl border border-foreground/10 rounded-3xl p-10 shadow-[0_8px_32px_0_rgba(0,0,0,0.1)]"
           >
-            <a href="mailto:jobsforanchit.boruah@gmail.com" className="group flex items-center gap-6 hover:-translate-y-1 transition-transform pm-glass-hover p-4 rounded-2xl">
+            <a href="mailto:jobsforanchit.boruah@gmail.com" aria-label="Send an email to Anchit Boruah" className="group flex items-center gap-6 hover:-translate-y-1 transition-transform pm-glass-hover p-4 rounded-2xl">
               <div className="p-4 bg-background/50 rounded-full shadow-inner text-emerald-500 group-hover:scale-110 transition-transform">
-                <Mail className="w-6 h-6" />
+                <Mail className="w-6 h-6" aria-hidden="true" />
               </div>
               <div>
                 <div className="text-foreground/50 text-xs font-bold uppercase tracking-widest mb-1">Direct Email</div>
@@ -81,9 +81,9 @@ export default function Contact() {
               </div>
             </a>
 
-            <a href="https://linkedin.com/in/anchitboruah/" target="_blank" rel="noreferrer" className="group flex items-center gap-6 hover:-translate-y-1 transition-transform pm-glass-hover p-4 rounded-2xl">
+            <a href="https://linkedin.com/in/anchitboruah/" target="_blank" rel="noreferrer" aria-label="Visit Anchit Boruah's LinkedIn profile" className="group flex items-center gap-6 hover:-translate-y-1 transition-transform pm-glass-hover p-4 rounded-2xl">
               <div className="p-4 bg-background/50 rounded-full shadow-inner text-blue-500 group-hover:scale-110 transition-transform">
-                <Linkedin className="w-6 h-6" />
+                <Linkedin className="w-6 h-6" aria-hidden="true" />
               </div>
               <div>
                 <div className="text-foreground/50 text-xs font-bold uppercase tracking-widest mb-1">LinkedIn</div>
@@ -91,9 +91,9 @@ export default function Contact() {
               </div>
             </a>
 
-            <a href="https://github.com/anchit98/" target="_blank" rel="noreferrer" className="group flex items-center gap-6 hover:-translate-y-1 transition-transform pm-glass-hover p-4 rounded-2xl">
+            <a href="https://github.com/anchit98/" target="_blank" rel="noreferrer" aria-label="Visit Anchit Boruah's GitHub profile" className="group flex items-center gap-6 hover:-translate-y-1 transition-transform pm-glass-hover p-4 rounded-2xl">
               <div className="p-4 bg-background/50 rounded-full shadow-inner text-foreground/80 group-hover:scale-110 transition-transform">
-                <Github className="w-6 h-6" />
+                <Github className="w-6 h-6" aria-hidden="true" />
               </div>
               <div>
                 <div className="text-foreground/50 text-xs font-bold uppercase tracking-widest mb-1">GitHub</div>
@@ -101,9 +101,9 @@ export default function Contact() {
               </div>
             </a>
 
-            <a href="https://instagram.com/anchitboruah/" target="_blank" rel="noreferrer" className="group flex items-center gap-6 hover:-translate-y-1 transition-transform pm-glass-hover p-4 rounded-2xl">
+            <a href="https://instagram.com/anchitboruah/" target="_blank" rel="noreferrer" aria-label="Visit Anchit Boruah's Instagram profile" className="group flex items-center gap-6 hover:-translate-y-1 transition-transform pm-glass-hover p-4 rounded-2xl">
               <div className="p-4 bg-background/50 rounded-full shadow-inner text-foreground/80 group-hover:scale-110 transition-transform">
-                <Instagram className="w-6 h-6" />
+                <Instagram className="w-6 h-6" aria-hidden="true" />
               </div>
               <div>
                 <div className="text-foreground/50 text-xs font-bold uppercase tracking-widest mb-1">Instagram</div>
@@ -111,6 +111,7 @@ export default function Contact() {
               </div>
             </a>
           </motion.div>
+
 
           {/* Right Glass Card: Email Form */}
           <motion.div
@@ -128,57 +129,63 @@ export default function Contact() {
                   exit={{ opacity: 0, y: -20 }}
                   className="flex flex-col gap-8 w-full h-full justify-between"
                   onSubmit={handleSubmit}
-                  action="https://formspree.io/f/xreykdwe"
-                  method="POST"
+                  aria-label="Contact form"
                 >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="relative">
                       <input
+                        id="contact-name"
                         type="text"
                         name="name"
                         required
+                        aria-required="true"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         className="peer w-full bg-transparent border-b border-foreground/20 py-3 text-foreground focus:outline-none focus:border-emerald-500 transition-colors placeholder-transparent"
                         placeholder="Name"
                       />
-                      <label className="absolute left-0 -top-3.5 text-xs text-foreground/50 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3 peer-focus:-top-3.5 peer-focus:text-xs peer-focus:text-emerald-500">Name</label>
+                      <label htmlFor="contact-name" className="absolute left-0 -top-3.5 text-xs text-foreground/50 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3 peer-focus:-top-3.5 peer-focus:text-xs peer-focus:text-emerald-500 cursor-text">Name</label>
                     </div>
 
                     <div className="relative">
                       <input
+                        id="contact-email"
                         type="email"
                         name="email"
                         required
+                        aria-required="true"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         className="peer w-full bg-transparent border-b border-foreground/20 py-3 text-foreground focus:outline-none focus:border-emerald-500 transition-colors placeholder-transparent"
-                        placeholder="Email"
+                        placeholder="Email Address"
                       />
-                      <label className="absolute left-0 -top-3.5 text-xs text-foreground/50 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3 peer-focus:-top-3.5 peer-focus:text-xs peer-focus:text-emerald-500">Email Address</label>
+                      <label htmlFor="contact-email" className="absolute left-0 -top-3.5 text-xs text-foreground/50 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3 peer-focus:-top-3.5 peer-focus:text-xs peer-focus:text-emerald-500 cursor-text">Email Address</label>
                     </div>
                   </div>
 
                   <div className="relative flex-grow">
                     <textarea
+                      id="contact-message"
                       name="message"
                       required
+                      aria-required="true"
                       rows={4}
                       value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                       className="peer w-full h-full bg-transparent border-b border-foreground/20 py-3 text-foreground focus:outline-none focus:border-emerald-500 transition-colors placeholder-transparent resize-none"
                       placeholder="Message"
                     />
-                    <label className="absolute left-0 -top-3.5 text-xs text-foreground/50 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3 peer-focus:-top-3.5 peer-focus:text-xs peer-focus:text-emerald-500">How can I help you?</label>
+                    <label htmlFor="contact-message" className="absolute left-0 -top-3.5 text-xs text-foreground/50 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3 peer-focus:-top-3.5 peer-focus:text-xs peer-focus:text-emerald-500 cursor-text">How can I help you?</label>
                   </div>
 
                   <button
                     type="submit"
                     disabled={isSubmitting}
                     className="group w-full md:w-auto self-end bg-foreground text-background hover:bg-emerald-500 hover:text-white px-8 py-4 rounded-full font-bold transition-all flex items-center justify-center gap-3 pm-glass-hover disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label={isSubmitting ? "Sending your message" : "Send your message"}
                   >
                     {isSubmitting ? "Sending..." : "Send Message"}
-                    <Send className="w-4 h-4 group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" />
+                    <Send className="w-4 h-4 group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
                   </button>
                 </motion.form>
               ) : (
@@ -187,9 +194,11 @@ export default function Contact() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="flex flex-col items-center text-center gap-4"
+                  role="status"
+                  aria-live="polite"
                 >
                   <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mb-4">
-                    <CheckCircle className="w-10 h-10 text-emerald-500" />
+                    <CheckCircle className="w-10 h-10 text-emerald-500" aria-hidden="true" />
                   </div>
                   <h3 className="text-3xl font-bold text-foreground">Message Sent!</h3>
                   <p className="text-foreground/60 text-lg font-light max-w-sm">
@@ -204,6 +213,7 @@ export default function Contact() {
                 </motion.div>
               )}
             </AnimatePresence>
+
           </motion.div>
 
         </div>

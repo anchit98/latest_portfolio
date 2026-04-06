@@ -49,33 +49,33 @@ export default function Projects() {
   };
 
   return (
-    <section 
-      id="work" 
+    <section
+      id="work"
       className="relative w-full bg-background py-32 overflow-hidden border-t border-foreground/5 z-20"
     >
       <div className="max-w-7xl mx-auto px-6 md:px-12">
-        
+
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-16 gap-6 text-center md:text-left px-4 md:px-0">
           <div>
             <h2 className="text-4xl md:text-6xl font-bold tracking-tighter drop-shadow-md text-foreground">
-              Selected Work
+              Projects & Case Studies
             </h2>
             <p className="text-lg mt-4 font-light text-foreground/60 max-w-lg mx-auto md:mx-0">
-              Real problems. Real impact. Browse through a few pivotal projects that defined business trajectories.
+              Real problems. Real impact. Browse through a few pivotal projects & case studies that I have worked on.
             </p>
           </div>
 
           {/* Nav Buttons */}
           <div className="flex gap-4 pm-zone">
-            <button 
+            <button
               onClick={() => scroll("left")}
               className="p-3 rounded-full border border-foreground/20 hover:bg-foreground/5 text-foreground transition-all"
               aria-label="Scroll Left"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <button 
+            <button
               onClick={() => scroll("right")}
               className="p-3 rounded-full border border-foreground/20 hover:bg-foreground/5 text-foreground transition-all"
               aria-label="Scroll Right"
@@ -86,18 +86,21 @@ export default function Projects() {
         </div>
 
         {/* Scrollable Gallery */}
-        <div 
+        <div
           ref={scrollContainerRef}
           className="flex gap-8 overflow-x-auto no-scrollbar pb-12 pm-zone pt-8 scroll-smooth snap-x snap-mandatory"
+          role="region"
+          aria-label="Projects Gallery"
         >
           {PROJECTS.map((project, idx) => (
-            <div 
-              key={idx} 
+            <article
+              key={idx}
               className="group relative w-[85vw] md:w-[450px] flex-shrink-0 bg-foreground/5 border border-foreground/10 rounded-3xl overflow-hidden hover:-translate-y-2 transition-transform duration-500 shadow-xl snap-center"
+              aria-label={`Project: ${project.title}`}
             >
               {/* Image Section (Reduced Size) */}
-              <div className="relative h-56 w-full overflow-hidden bg-foreground/10">
-                <div 
+              <div className="relative h-56 w-full overflow-hidden bg-foreground/10" role="img" aria-label={`Screenshot of ${project.title}`}>
+                <div
                   className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
                   style={{ backgroundImage: `url(${project.image})` }}
                 />
@@ -109,26 +112,27 @@ export default function Projects() {
                   <div className="mb-4 inline-block w-fit rounded-full bg-foreground/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-foreground/70">
                     {project.role}
                   </div>
-                  
+
                   <h3 className="mb-3 text-2xl font-bold tracking-tight text-foreground">
                     {project.title}
                   </h3>
-                  
+
                   <p className="text-sm font-light leading-relaxed text-foreground/70 line-clamp-4">
                     {project.description}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-3 text-sm font-bold text-green-500 mt-6 pt-6 border-t border-foreground/10">
-                  <span className="h-[2px] w-6 bg-green-500 rounded-full" />
+                <div className="flex items-center gap-3 text-sm font-bold text-green-500 mt-6 pt-6 border-t border-foreground/10" aria-label={`Impact metric: ${project.metric}`}>
+                  <span className="h-[2px] w-6 bg-green-500 rounded-full" aria-hidden="true" />
                   {project.metric}
                 </div>
               </div>
-            </div>
+            </article>
           ))}
           {/* Empty spacer for the end of the scroll */}
-          <div className="w-[10vw] flex-shrink-0" />
+          <div className="w-[10vw] flex-shrink-0" aria-hidden="true" />
         </div>
+
 
       </div>
     </section>

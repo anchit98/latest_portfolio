@@ -12,6 +12,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Scrollytelling Portfolio",
   description: "A high-end personal portfolio featuring scroll-linked animations.",
+  icons: {
+    icon: "/sequence/frame_081_delay-0.066s.png",
+  },
 };
 
 export default function RootLayout({
