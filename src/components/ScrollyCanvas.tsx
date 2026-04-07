@@ -11,24 +11,59 @@ export default function ScrollyCanvas() {
   const frameCount = 82;
 
   useEffect(() => {
-    const loadedImages: HTMLImageElement[] = new Array(frameCount);
     let count = 0;
+    const loadedImages: HTMLImageElement[] = new Array(frameCount);
 
-    for (let i = 0; i < frameCount; i++) {
-      const img = new Image();
-      const frameNum = i.toString().padStart(3, "0");
-      img.src = `/sequence/frame_${frameNum}_delay-0.066s.png`;
+    const loadFrame = (index: number) => {
+      return new Promise<void>((resolve) => {
+        const img = new Image();
+        const frameNum = index.toString().padStart(3, "0");
+        img.src = `/sequence/frame_${frameNum}_delay-0.066s.webp`;
+        
+        const onSettle = () => {
+          loadedImages[index] = img;
+          count++;
+          setLoadedCount(count);
+          // Periodically update state to draw newly loaded frames
+          if (index === 0 || count === frameCount || count % 5 === 0) {
+            setImages([...loadedImages]);
+          }
+          resolve();
+        };
 
-      const onSettle = () => {
-        count++;
-        setLoadedCount(count);
-        if (count === frameCount) setImages([...loadedImages]);
+        img.onload = onSettle;
+        img.onerror = onSettle;
+      });
+    };
+
+    const loadSequentially = async () => {
+      // Prioritize frame 0 to unblock layout
+      await loadFrame(0);
+      setImages([...loadedImages]); 
+
+      let i = 1;
+      const loadNext = () => {
+        if (i < frameCount) {
+          if ('requestIdleCallback' in window) {
+            (window as any).requestIdleCallback(async () => {
+              await loadFrame(i);
+              i++;
+              loadNext();
+            });
+          } else {
+            setTimeout(async () => {
+              await loadFrame(i);
+              i++;
+              loadNext();
+            }, 10);
+          }
+        }
       };
+      
+      loadNext();
+    };
 
-      img.onload = onSettle;
-      img.onerror = onSettle;
-      loadedImages[i] = img;
-    }
+    loadSequentially();
   }, []);
 
   const { scrollYProgress } = useScroll({
@@ -56,12 +91,12 @@ export default function ScrollyCanvas() {
   };
 
   useEffect(() => {
-    if (images.length === 0 || !canvasRef.current) return;
+    if (images.length === 0 || !canvasRef.current || !images[0]) return;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    if (ctx) drawImage(images[0], ctx, canvas);
+    if (ctx && images[0]) requestAnimationFrame(() => drawImage(images[0], ctx, canvas));
 
     const handleResize = () => {
       if (!canvasRef.current) return;
@@ -69,8 +104,10 @@ export default function ScrollyCanvas() {
       const cx = c.getContext("2d");
       c.width = window.innerWidth;
       c.height = window.innerHeight;
-      const frame = Math.min(frameCount - 1, Math.floor(scrollYProgress.get() * frameCount));
-      if (cx) drawImage(images[frame], cx, c);
+      const targetFrame = Math.min(frameCount - 1, Math.floor(scrollYProgress.get() * frameCount));
+      let frameIndex = targetFrame;
+      while (!images[frameIndex] && frameIndex > 0) frameIndex--;
+      if (cx && images[frameIndex]) requestAnimationFrame(() => drawImage(images[frameIndex], cx, c));
     };
 
     window.addEventListener("resize", handleResize);
@@ -83,39 +120,61 @@ export default function ScrollyCanvas() {
 
   useMotionValueEvent(scrollYProgress, "change", (progress) => {
     if (images.length === 0 || !canvasRef.current) return;
-    const frameIndex = Math.min(frameCount - 1, Math.floor(progress * frameCount));
+    const targetFrame = Math.min(frameCount - 1, Math.floor(progress * frameCount));
+    
+    let frameIndex = targetFrame;
+    while (!images[frameIndex] && frameIndex > 0) {
+      frameIndex--;
+    }
+    
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-    if (ctx && images[frameIndex]) drawImage(images[frameIndex], ctx, canvas);
+    if (ctx && images[frameIndex]) {
+      requestAnimationFrame(() => drawImage(images[frameIndex], ctx, canvas));
+    }
   });
 
-  // Overlay transforms — same values as before, now using the correct containerRef progress
-  const opacity1 = useTransform(scrollYProgress, [0, 0.05, 0.15, 0.25], [0, 1, 1, 0]);
-  const y1 = useTransform(scrollYProgress, [0, 0.25], [50, -100]);
-  const opacity2 = useTransform(scrollYProgress, [0.25, 0.35, 0.55, 0.65], [0, 1, 1, 0]);
-  const y2 = useTransform(scrollYProgress, [0.25, 0.65], [100, -100]);
+  // Hero portrait fades out during first 6% of scroll
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.04, 0.08], [1, 0.4, 0]);
+  const heroScale  = useTransform(scrollYProgress, [0, 0.08], [1, 1.04]);
+
+  // Text overlays — first one starts after hero has fully faded
+  const opacity1 = useTransform(scrollYProgress, [0.06, 0.12, 0.20, 0.28], [0, 1, 1, 0]);
+  const y1 = useTransform(scrollYProgress, [0.06, 0.28], [50, -100]);
+  const opacity2 = useTransform(scrollYProgress, [0.28, 0.38, 0.55, 0.65], [0, 1, 1, 0]);
+  const y2 = useTransform(scrollYProgress, [0.28, 0.65], [100, -100]);
   const opacity3 = useTransform(scrollYProgress, [0.65, 0.75, 0.9, 1], [0, 1, 1, 0]);
   const y3 = useTransform(scrollYProgress, [0.65, 1], [100, -100]);
 
   return (
     <div ref={containerRef} className="relative h-[500vh] w-full bg-[#0a1628]">
       <div className="sticky top-0 h-screen w-full overflow-hidden">
-
-        {/* Background gradient */}
         <div className="absolute inset-0 z-0 pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-br from-[#0a1628] via-[#0d2035] to-[#0a1628] blur-[120px] opacity-60" />
         </div>
 
-        {/* Canvas */}
         <canvas ref={canvasRef} className="relative h-full w-full block z-10" />
 
-        {/* Top/bottom gradients */}
+        {/* Hero portrait — fades out as scroll begins */}
+        <motion.div
+          style={{ opacity: heroOpacity, scale: heroScale }}
+          className="absolute inset-0 z-[15] pointer-events-none will-change-[opacity,transform]"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/sequence/frame_hero.webp"
+            alt="Anchit Boruah"
+            className="w-full h-full object-cover object-center"
+            fetchPriority="high"
+          />
+          {/* subtle vignette on the portrait */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
+        </motion.div>
+
         <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black to-transparent pointer-events-none z-20" />
         <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-b from-transparent via-black/20 to-black pointer-events-none z-20" />
 
-        {/* Overlay text — lives here now, shares containerRef scroll progress */}
         <div className="absolute inset-0 z-30 pointer-events-none flex flex-col justify-center px-6 md:px-24">
-
           <motion.div
             style={{ opacity: opacity1, y: y1 }}
             className="absolute left-0 right-0 top-1/2 -translate-y-1/2 text-center px-6"
@@ -151,13 +210,11 @@ export default function ScrollyCanvas() {
               Every roadmap purposeful. Every feature earned. Turning complex problems into scalable products that deliver measurable business value.
             </p>
           </motion.div>
-
         </div>
 
-        {/* Loading indicator */}
         {loadedCount < frameCount && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-50 text-foreground font-mono">
-            Loading... {loadedCount}/{frameCount}
+          <div className="absolute top-4 right-4 z-50 text-foreground/50 font-mono text-[10px] md:text-xs">
+            Loading Sequence... {Math.round((loadedCount / frameCount) * 100)}%
           </div>
         )}
       </div>

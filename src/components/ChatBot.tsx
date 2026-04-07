@@ -45,9 +45,16 @@ export default function ChatBot() {
         body: JSON.stringify({ message: userMessage }),
       });
 
-      if (!response.ok) throw new Error("Failed to fetch response");
-
       const data = await response.json();
+
+      if (!response.ok) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: data.reply || "Sorry, something went wrong. Please try again!" },
+        ]);
+        return;
+      }
+
       setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
     } catch (error) {
       console.error("Chat Error:", error);

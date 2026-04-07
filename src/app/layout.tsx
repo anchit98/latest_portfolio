@@ -7,13 +7,21 @@ import ChatBot from "@/components/ChatBot";
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
   title: "Scrollytelling Portfolio",
   description: "A high-end personal portfolio featuring scroll-linked animations.",
   icons: {
-    icon: "/sequence/frame_081_delay-0.066s.png",
+    icon: [
+      { url: "/favicon-hero.png", sizes: "512x512", type: "image/png" },
+      { url: "/favicon-hero.png", sizes: "192x192", type: "image/png" },
+      { url: "/favicon-hero.png", sizes: "32x32",  type: "image/png" },
+      { url: "/favicon-hero.png", sizes: "16x16",  type: "image/png" },
+    ],
+    apple: "/favicon-hero.png",
+    shortcut: "/favicon-hero.png",
   },
 };
 

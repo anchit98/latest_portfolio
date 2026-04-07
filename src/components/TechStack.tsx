@@ -50,7 +50,7 @@ export default function TechStack() {
 
   return (
     <section className="relative w-full bg-background py-32 overflow-hidden border-t py-12 border-foreground/5 z-20">
-      
+
       {/* Background ambient noise/blur for transition fluidity */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
 
@@ -60,7 +60,7 @@ export default function TechStack() {
           <motion.div
             key={i}
             initial={{ opacity: 0.1 }}
-            animate={{ 
+            animate={{
               opacity: [0.1, 0.8, 0.1],
               scale: [1, 1.5, 1]
             }}
@@ -84,10 +84,10 @@ export default function TechStack() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 md:px-24 relative z-10">
-        
+
         <div className="text-center mb-16 px-4">
           <h2 className="text-3xl md:text-5xl font-bold tracking-tighter text-foreground mb-4 drop-shadow-sm">
-            The Toolbox
+            My Toolbox
           </h2>
           <p className="text-foreground/60 text-lg max-w-lg mx-auto">
             Empowering teams with the right tools for discovery and delivery.
@@ -97,7 +97,7 @@ export default function TechStack() {
         <div className="relative h-auto min-h-[200px] w-full mt-12 flex flex-wrap justify-center items-center gap-6 md:gap-12 pm-zone">
           {TECH_STACK.map((tech, idx) => {
             const params = randomParams[idx] || { delay: 0, y: 0, duration: 3 };
-            
+
             return (
               <motion.div
                 key={tech.name}
@@ -117,11 +117,10 @@ export default function TechStack() {
                   opacity: { duration: 0.5, delay: idx * 0.1 },
                   scale: { duration: 0.5, delay: idx * 0.1, type: "spring" }
                 }}
-                className={`w-20 h-20 md:w-24 md:h-24 rounded-full border backdrop-blur-md cursor-pointer hover:scale-110 transition-transform shadow-[0_4px_30px_rgba(0,0,0,0.1)] pm-glass-hover flex items-center justify-center ${
-                  tech.name === "Miro" 
-                    ? "bg-white/90 backdrop-blur-2xl border-white/50 shadow-[inset_0_0_20px_rgba(255,255,255,1),0_8px_32px_0_rgba(255,255,255,0.2)]" 
+                className={`w-20 h-20 md:w-24 md:h-24 rounded-full border backdrop-blur-md cursor-pointer hover:scale-110 transition-transform shadow-[0_4px_30px_rgba(0,0,0,0.1)] pm-glass-hover flex items-center justify-center ${tech.name === "Miro"
+                    ? "bg-white/90 backdrop-blur-2xl border-white/50 shadow-[inset_0_0_20px_rgba(255,255,255,1),0_8px_32px_0_rgba(255,255,255,0.2)]"
                     : "bg-foreground/5 border-foreground/10"
-                }`}
+                  }`}
 
                 role="img"
                 aria-label={tech.name}

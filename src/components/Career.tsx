@@ -57,7 +57,7 @@ export default function Career() {
         {/* Title area */}
         <div className="mb-24 md:mb-32 text-center md:text-left px-4 md:px-0">
           <h2 className="text-4xl md:text-6xl font-bold tracking-tighter drop-shadow-md text-foreground">
-            The Epic Saga of Doing Things for Money
+            My Epic Saga of Doing Things for Money
           </h2>
           <h4 className="mt-4 text-lg font-light text-foreground/60 max-w-lg mx-auto md:mx-0">
             Strategy, discovery, and execution mapped over the years.
@@ -74,8 +74,8 @@ export default function Career() {
             const floatDelay = randomDelays[idx] || 0;
 
             return (
-              <article 
-                key={idx} 
+              <article
+                key={idx}
                 className="relative w-full md:w-1/4 flex-shrink-0 z-10 flex flex-col items-center md:items-start pt-20 md:pt-0 text-center md:text-left"
                 aria-label={`Career milestone: ${item.role} at ${item.company}`}
               >

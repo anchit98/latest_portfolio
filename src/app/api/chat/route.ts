@@ -44,12 +44,20 @@ export async function POST(req: Request) {
     const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
     if (!apiKey) {
-      return NextResponse.json({ reply: "Missing API Key." }, { status: 500 });
+      console.error("GOOGLE_GENERATIVE_AI_API_KEY is not set in environment variables.");
+      return NextResponse.json(
+        { reply: "The assistant is not configured yet. The API key is missing from the server environment." },
+        { status: 500 }
+      );
     }
 
     const fullPrompt = SYSTEM_PROMPT.replace("{userMessage}", userMessage);
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+    // Abort if the Gemini API takes longer than 15 seconds
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
 
     const response = await fetch(apiUrl, {
       method: "POST",
@@ -63,13 +71,16 @@ export async function POST(req: Request) {
           },
         ],
       }),
+      signal: controller.signal,
     });
 
+    clearTimeout(timeout);
+
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Gemini Direct API Error:", errorData);
+      const errorText = await response.text();
+      console.error(`Gemini API Error [${response.status}]:`, errorText);
       return NextResponse.json({
-        reply: `API Error: ${errorData.error?.message || "Failed to generate content"}`
+        reply: `Oops — the AI service returned an error (${response.status}). Please try again in a moment.`
       }, { status: 500 });
     }
 
@@ -78,8 +89,19 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ reply: text });
   } catch (error: any) {
-    console.error("Chat Server Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Chat Server Error:", error?.name, error?.message);
+
+    if (error?.name === "AbortError") {
+      return NextResponse.json(
+        { reply: "The AI took too long to respond. Please try again!" },
+        { status: 504 }
+      );
+    }
+
+    return NextResponse.json(
+      { reply: "Something went wrong on the server. Please try again later." },
+      { status: 500 }
+    );
   }
 }
 
