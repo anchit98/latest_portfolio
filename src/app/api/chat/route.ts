@@ -32,10 +32,13 @@ Key Projects:
 4. Be enthusiastic about his achievements but keep it data-driven (mention the numbers!).
 5. Keep responses under 3-4 sentences whenever possible to maintain a chat-like feel.
 6. Share links to his projects if it helps to support answers to any question.
-
-### USER INPUT:
-{userMessage}
 `;
+
+const MODELS = [
+  "gemini-2.0-flash",
+  "gemini-1.5-flash",
+  "gemini-1.5-flash-8b",
+];
 
 export async function POST(req: Request) {
   try {
@@ -44,64 +47,76 @@ export async function POST(req: Request) {
     const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
     if (!apiKey) {
-      console.error("GOOGLE_GENERATIVE_AI_API_KEY is not set in environment variables.");
+      console.error("GOOGLE_GENERATIVE_AI_API_KEY is not set.");
       return NextResponse.json(
-        { reply: "The assistant is not configured yet. The API key is missing from the server environment." },
+        { reply: "Assistant configuration missing. Please set the API key." },
         { status: 500 }
       );
     }
 
-    const fullPrompt = SYSTEM_PROMPT.replace("{userMessage}", userMessage);
+    const genAI = new GoogleGenerativeAI(apiKey);
+    let lastError = null;
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    // Try models in sequence as fallbacks
+    for (const modelName of MODELS) {
+      try {
+        console.log(`[API/Chat] Attempting request with model: ${modelName}`);
+        
+        const model = genAI.getGenerativeModel({ 
+          model: modelName,
+          generationConfig: {
+            maxOutputTokens: 500,
+            temperature: 0.7,
+          }
+        });
 
-    // Abort if the Gemini API takes longer than 15 seconds
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
-
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [{ text: fullPrompt }],
+        const chat = model.startChat({
+          history: [],
+          generationConfig: {
+            maxOutputTokens: 500,
           },
-        ],
-      }),
-      signal: controller.signal,
-    });
+        });
 
-    clearTimeout(timeout);
+        // Combine prompt with user message
+        const prompt = `${SYSTEM_PROMPT}\n\nUSER INPUT: ${userMessage}`;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Gemini API Error [${response.status}]:`, errorText);
-      return NextResponse.json({
-        reply: `Oops — the AI service returned an error (${response.status}). Please try again in a moment.`
-      }, { status: 500 });
+        const result = await chat.sendMessage(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        if (text) {
+          console.log(`[API/Chat] Success with model: ${modelName}`);
+          return NextResponse.json({ reply: text, modelUsed: modelName });
+        }
+      } catch (err: any) {
+        console.warn(`[API/Chat] Model ${modelName} failed:`, err.message || err);
+        lastError = err;
+        // Continue to next model
+      }
     }
 
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "I processed your request, but couldn't generate a text response.";
-
-    return NextResponse.json({ reply: text });
-  } catch (error: any) {
-    console.error("Chat Server Error:", error?.name, error?.message);
-
-    if (error?.name === "AbortError") {
+    // If all models failed
+    console.error("[API/Chat] All Gemini models failed:", lastError);
+    
+    // Check if it's a specific type of error
+    const errorMessage = lastError?.message || "Internal Server Error";
+    if (errorMessage.includes("429")) {
       return NextResponse.json(
-        { reply: "The AI took too long to respond. Please try again!" },
-        { status: 504 }
+        { reply: "I'm receiving too many requests right now. Please try again in a moment!" },
+        { status: 429 }
       );
     }
 
+    return NextResponse.json(
+      { reply: "I'm having a bit of trouble connecting to my brain right now. Can you try again in a moment?" },
+      { status: 500 }
+    );
+
+  } catch (error: any) {
+    console.error("Chat Server Error:", error);
     return NextResponse.json(
       { reply: "Something went wrong on the server. Please try again later." },
       { status: 500 }
     );
   }
 }
-

@@ -19,7 +19,7 @@ type ProjectType = {
   downloads?: { url: string; text: string }[];
 };
 
-const PROJECTS: ProjectType[] = [
+export const PROJECTS: ProjectType[] = [
   {
     id: "AB001",
     title: "Reducing Customer Support Load",

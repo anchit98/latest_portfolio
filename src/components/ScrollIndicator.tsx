@@ -16,6 +16,11 @@ export default function ScrollIndicator() {
       style={{ opacity, scale }}
       className="fixed bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none z-50"
     >
+      {/* Mobile Desktop Disclaimer */}
+      <div className="md:hidden mb-4 px-4 py-2 border border-foreground/20 rounded-full bg-background/30 backdrop-blur-md text-foreground/80 text-[9px] tracking-widest uppercase shadow-xl whitespace-nowrap">
+        <span className="mr-1" aria-hidden="true">🖥️</span> Open in desktop for best experience
+      </div>
+
       <motion.p
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 0.6, y: 0 }}

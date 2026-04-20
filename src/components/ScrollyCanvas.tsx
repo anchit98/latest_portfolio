@@ -231,7 +231,7 @@ export default function ScrollyCanvas() {
           <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-b from-transparent via-black/20 to-black pointer-events-none z-20" />
 
           <div className="absolute inset-0 z-30 pointer-events-none flex flex-col justify-center px-6 md:px-24">
-            
+
             {/* DESKTOP ANIMATED TEXTS */}
             <motion.div
               style={{ opacity: opacity1, y: y1 }}
@@ -270,17 +270,13 @@ export default function ScrollyCanvas() {
             </motion.div>
 
             {/* MOBILE STATIC HERO (Hidden on Desktop) */}
-            <div className="md:hidden absolute left-0 right-0 top-1/2 -translate-y-1/2 text-center px-6 pb-12">
+            <div className="md:hidden absolute left-0 right-0 top-3/4 -translate-y-1/2 text-center px-6 pb-12">
               <h1 className="text-5xl font-bold tracking-tighter text-foreground drop-shadow-2xl">
                 Anchit Boruah
               </h1>
               <p className="mt-4 text-xl text-foreground/70 font-light tracking-wide drop-shadow-lg">
                 Aspiring Product Manager
               </p>
-              
-              <div className="mt-12 mx-auto inline-flex items-center gap-2 px-5 py-2.5 border border-foreground/20 rounded-full bg-background/30 backdrop-blur-md text-foreground/80 text-[10px] tracking-widest uppercase shadow-2xl pointer-events-auto shadow-black/50">
-                <span className="text-base" aria-hidden="true">🖥️</span> Open in desktop for best experience
-              </div>
             </div>
 
           </div>

@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
-const CAREER_DATA = [
+export const CAREER_DATA = [
   {
     year: "Jan'20 - Apr'22",
     role: "Sales Analyst",
