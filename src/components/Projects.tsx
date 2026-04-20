@@ -34,7 +34,7 @@ const PROJECTS: ProjectType[] = [
       "Established average handling time as a critical lever influencing agent headcount requirements.",
       "Quantified that targeted product interventions can reduce support dependency and unlock substantial cost savings."
     ],
-    tools: ["Whimsical", "Guesstimate", "Product Thinking"],
+    tools: ["Whimsical", "Guesstimate", "Product Sense", "Product Thinking"],
     // To add a downloadable file (PDF, PPTX, etc.):
     // 1. Drop your file in the 'public/files/' folder.
     // 2. Add the path here (e.g. "/files/Case Study_Swiggy.pdf"). Leave empty "" to hide the button and preview.
@@ -55,11 +55,11 @@ const PROJECTS: ProjectType[] = [
       "Defined actionable product and growth levers to improve retention and reduce CAC.",
       "Prioritized high-intent segments and refined acquisition channels to drive sustainable growth."
     ],
-    tools: ["Data Cleaning", "User Segmentation", "Analytics"],
+    tools: ["Data Cleaning", "User Segmentation", "Analytics", "Strategic Thinking"],
     // Use the downloads array for multiple files
     downloads: [
       { url: "/files/Peppo_Problem Statement.docx", text: "Download Problem Statement" },
-      { url: "/files/Cracking Growth at Peppo_Working Document.xlsx", text: "Download Solution File" }
+      { url: "/files/Cracking Growth at Peppo_Working Document.xlsx", text: "Download Solution Document" }
     ]
   },
   {
@@ -78,7 +78,7 @@ const PROJECTS: ProjectType[] = [
     ],
     tools: ["Whimsical", "ChatGPT", "Prioritization", "RICE Framework"],
     downloadUrl: "/files/Increasing ChatGPT's Voice Tech Usage_PRD.pdf",
-    downloadText: "Download full PRD"
+    downloadText: "Download Full PRD"
   },
 ];
 

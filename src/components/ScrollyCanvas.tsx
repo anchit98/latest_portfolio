@@ -6,91 +6,40 @@ import { useScroll, useTransform, useMotionValueEvent, motion } from "framer-mot
 export default function ScrollyCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [images, setImages] = useState<HTMLImageElement[]>([]);
-  const [loadedCount, setLoadedCount] = useState(0);
+
+  // Performance Refs
+  const imagesRef = useRef<HTMLImageElement[]>([]);
+  const lastDrawnFrameRef = useRef<number>(-1);
+  const rafPendingRef = useRef<number | null>(null);
   const frameCount = 82;
 
-  useEffect(() => {
-    let count = 0;
-    const loadedImages: HTMLImageElement[] = new Array(frameCount);
-
-    const loadFrame = async (index: number) => {
-      const frameNum = index.toString().padStart(3, "0");
-      const src = `/sequence/frame_${frameNum}_delay-0.066s.webp`;
-
-      // Try Cache Storage first (populated by the service worker)
-      let blobUrl: string | null = null;
-      try {
-        const cache = await caches.open("sequence-cache-v1");
-        const cached = await cache.match(src);
-        if (cached) {
-          const blob = await cached.blob();
-          blobUrl = URL.createObjectURL(blob);
-        }
-      } catch {
-        // Cache API not available or miss — fall through to network
-      }
-
-      return new Promise<void>((resolve) => {
-        const img = new Image();
-        img.src = blobUrl || src;
-
-        const onSettle = () => {
-          loadedImages[index] = img;
-          count++;
-          setLoadedCount(count);
-          if (index === 0 || count === frameCount || count % 5 === 0) {
-            setImages([...loadedImages]);
-          }
-          resolve();
-        };
-
-        img.onload = onSettle;
-        img.onerror = onSettle;
-      });
-    };
-
-    const loadSequentially = async () => {
-      // Prioritize frame 0 to unblock layout
-      await loadFrame(0);
-      setImages([...loadedImages]);
-
-      let i = 1;
-      const loadNext = () => {
-        if (i < frameCount) {
-          if ('requestIdleCallback' in window) {
-            (window as any).requestIdleCallback(async () => {
-              await loadFrame(i);
-              i++;
-              loadNext();
-            });
-          } else {
-            setTimeout(async () => {
-              await loadFrame(i);
-              i++;
-              loadNext();
-            }, 10);
-          }
-        }
-      };
-
-      loadNext();
-    };
-
-    loadSequentially();
-  }, []);
+  const [isReady, setIsReady] = useState(false);
+  const [loadPercentage, setLoadPercentage] = useState(0);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"],
   });
 
-  const drawImage = (img: HTMLImageElement, ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
-    if (!img || !img.complete || img.naturalWidth === 0) return;
+  const drawFrame = (index: number) => {
+    const canvas = canvasRef.current;
+    const images = imagesRef.current;
+    if (!canvas || !images[index]) return;
+
+    const ctx = canvas.getContext("2d", { alpha: false });
+    if (!ctx) return;
+
+    const img = images[index];
+    if (!img.complete || img.naturalWidth === 0) return;
+
     const canvasRatio = canvas.width / canvas.height;
     const imgRatio = img.width / img.height;
     const isMobile = window.innerWidth < 768;
-    let drawWidth = canvas.width, drawHeight = canvas.height, offsetX = 0, offsetY = 0;
+
+    let drawWidth = canvas.width;
+    let drawHeight = canvas.height;
+    let offsetX = 0;
+    let offsetY = 0;
 
     if (canvasRatio > imgRatio) {
       drawHeight = canvas.width / imgRatio;
@@ -100,59 +49,123 @@ export default function ScrollyCanvas() {
       offsetX = (canvas.width - drawWidth) / 2;
     }
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+    lastDrawnFrameRef.current = index;
   };
 
   useEffect(() => {
-    if (images.length === 0 || !canvasRef.current || !images[0]) return;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    if (ctx && images[0]) requestAnimationFrame(() => drawImage(images[0], ctx, canvas));
+    // Lock scrolling on the document level while loading
+    if (!isReady) {
+      document.body.style.overflow = "hidden";
+      document.body.style.touchAction = "none";
+    } else {
+      document.body.style.overflow = "unset";
+      document.body.style.touchAction = "unset";
+    }
+
+    return () => {
+      document.body.style.overflow = "unset";
+      document.body.style.touchAction = "unset";
+    };
+  }, [isReady]);
+
+  useEffect(() => {
+    let loadedCount = 0;
+    const images: HTMLImageElement[] = new Array(frameCount);
+    let mounted = true;
+
+    const loadAndDecode = async (index: number) => {
+      const frameNum = index.toString().padStart(3, "0");
+      const src = `/sequence/frame_${frameNum}_delay-0.066s.webp`;
+
+      let finalSrc = src;
+      try {
+        const cache = await caches.open("sequence-cache-v1");
+        const cached = await cache.match(src);
+        if (cached) {
+          const blob = await cached.blob();
+          finalSrc = URL.createObjectURL(blob);
+        }
+      } catch { /* ignore fallback */ }
+
+      return new Promise<void>((resolve) => {
+        const img = new Image();
+        img.src = finalSrc;
+
+        img.onload = async () => {
+          try {
+            await img.decode();
+          } catch { /* decode throw if already supported or fails */ }
+
+          if (mounted) {
+            images[index] = img;
+            loadedCount++;
+            setLoadPercentage(Math.round((loadedCount / frameCount) * 100));
+          }
+          resolve();
+        };
+        img.onerror = resolve; // don't hang if error
+      });
+    };
+
+    const init = async () => {
+      // Parallel batches
+      const batches = [];
+      for (let i = 0; i < frameCount; i += 6) {
+        batches.push(
+          Promise.all(
+            Array.from({ length: Math.min(6, frameCount - i) }, (_, j) => loadAndDecode(i + j))
+          )
+        );
+        await new Promise(r => setTimeout(r, 10)); // Give main thread breathing room
+      }
+
+      await Promise.all(batches);
+
+      if (!mounted) return;
+
+      imagesRef.current = images;
+      if (canvasRef.current) {
+        canvasRef.current.width = window.innerWidth;
+        canvasRef.current.height = window.innerHeight;
+      }
+
+      setIsReady(true);
+      drawFrame(0);
+    };
+
+    init();
 
     const handleResize = () => {
-      if (!canvasRef.current) return;
-      const c = canvasRef.current;
-      const cx = c.getContext("2d");
-      c.width = window.innerWidth;
-      c.height = window.innerHeight;
-      const targetFrame = Math.min(frameCount - 1, Math.floor(scrollYProgress.get() * frameCount));
-      let frameIndex = targetFrame;
-      while (!images[frameIndex] && frameIndex > 0) frameIndex--;
-      if (cx && images[frameIndex]) requestAnimationFrame(() => drawImage(images[frameIndex], cx, c));
+      if (!canvasRef.current || !isReady) return;
+      canvasRef.current.width = window.innerWidth;
+      canvasRef.current.height = window.innerHeight;
+      const currentFrame = Math.min(frameCount - 1, Math.floor(scrollYProgress.get() * frameCount));
+      drawFrame(currentFrame);
     };
 
     window.addEventListener("resize", handleResize);
-    window.addEventListener("orientationchange", handleResize);
     return () => {
+      mounted = false;
       window.removeEventListener("resize", handleResize);
-      window.removeEventListener("orientationchange", handleResize);
     };
-  }, [images, scrollYProgress]);
+  }, []);
 
   useMotionValueEvent(scrollYProgress, "change", (progress) => {
-    if (images.length === 0 || !canvasRef.current) return;
+    if (!isReady || rafPendingRef.current !== null) return;
+
     const targetFrame = Math.min(frameCount - 1, Math.floor(progress * frameCount));
-    
-    let frameIndex = targetFrame;
-    while (!images[frameIndex] && frameIndex > 0) {
-      frameIndex--;
-    }
-    
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    if (ctx && images[frameIndex]) {
-      requestAnimationFrame(() => drawImage(images[frameIndex], ctx, canvas));
-    }
+
+    if (targetFrame === lastDrawnFrameRef.current) return;
+
+    rafPendingRef.current = requestAnimationFrame(() => {
+      drawFrame(targetFrame);
+      rafPendingRef.current = null;
+    });
   });
 
-  // Hero portrait fades out during first 6% of scroll
   const heroOpacity = useTransform(scrollYProgress, [0, 0.04, 0.08], [1, 0.4, 0]);
-  const heroScale  = useTransform(scrollYProgress, [0, 0.08], [1, 1.04]);
-
-  // Text overlays — first one starts after hero has fully faded
+  const heroScale = useTransform(scrollYProgress, [0, 0.08], [1, 1.04]);
   const opacity1 = useTransform(scrollYProgress, [0.06, 0.12, 0.20, 0.28], [0, 1, 1, 0]);
   const y1 = useTransform(scrollYProgress, [0.06, 0.28], [50, -100]);
   const opacity2 = useTransform(scrollYProgress, [0.28, 0.38, 0.55, 0.65], [0, 1, 1, 0]);
@@ -161,77 +174,97 @@ export default function ScrollyCanvas() {
   const y3 = useTransform(scrollYProgress, [0.65, 1], [100, -100]);
 
   return (
-    <div ref={containerRef} className="relative h-[500vh] w-full bg-[#0a1628]">
-      <div className="sticky top-0 h-screen w-full overflow-hidden">
-        <div className="absolute inset-0 z-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-br from-[#0a1628] via-[#0d2035] to-[#0a1628] blur-[120px] opacity-60" />
-        </div>
+    <>
+      {/* GLOBAL LOADING SCREEN */}
+      {!isReady && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0a1628]">
+          <div className="text-center px-6">
+            <h2 className="text-xl md:text-2xl font-bold tracking-widest text-foreground font-mono mb-2">LOADING</h2>
+            <div className="text-foreground/50 font-mono text-xs md:text-sm mb-8 tracking-[0.2em] uppercase">ANCHIT'S WORK & EXPERIENCE</div>
 
-        <canvas ref={canvasRef} className="relative h-full w-full block z-10" />
+            <div className="w-64 max-w-full h-1 bg-white/10 rounded-full overflow-hidden mx-auto">
+              <div
+                className="h-full bg-white transition-all duration-300 ease-out"
+                style={{ width: `${loadPercentage}%` }}
+              />
+            </div>
 
-        {/* Hero portrait — fades out as scroll begins */}
-        <motion.div
-          style={{ opacity: heroOpacity, scale: heroScale }}
-          className="absolute inset-0 z-[15] pointer-events-none will-change-[opacity,transform]"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/sequence/frame_hero.webp"
-            alt="Anchit Boruah"
-            className="w-full h-full object-cover object-center"
-            fetchPriority="high"
-          />
-          {/* subtle vignette on the portrait */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
-        </motion.div>
-
-        <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black to-transparent pointer-events-none z-20" />
-        <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-b from-transparent via-black/20 to-black pointer-events-none z-20" />
-
-        <div className="absolute inset-0 z-30 pointer-events-none flex flex-col justify-center px-6 md:px-24">
-          <motion.div
-            style={{ opacity: opacity1, y: y1 }}
-            className="absolute left-0 right-0 top-1/2 -translate-y-1/2 text-center px-6"
-          >
-            <h1 className="text-5xl md:text-8xl font-bold tracking-tighter text-foreground drop-shadow-2xl">
-              Anchit Boruah
-            </h1>
-            <p className="mt-4 text-xl md:text-3xl text-foreground/70 font-light tracking-wide drop-shadow-lg">
-              Aspiring Product Manager
-            </p>
-          </motion.div>
-
-          <motion.div
-            style={{ opacity: opacity2, y: y2 }}
-            className="absolute left-0 right-0 md:left-24 md:right-auto top-1/2 -translate-y-1/2 max-w-2xl px-6 md:px-0 text-center md:text-left"
-          >
-            <h2 className="text-3xl md:text-6xl font-bold tracking-tight text-foreground drop-shadow-2xl leading-tight">
-              I build Products <br className="hidden md:block" /> actually needed.
-            </h2>
-            <p className="mt-6 text-lg md:text-xl text-foreground/60 font-light drop-shadow-lg max-w-md mx-auto md:mx-0">
-              Bridging strategy, design, and execution to deliver solutions that scale and create real business value.
-            </p>
-          </motion.div>
-
-          <motion.div
-            style={{ opacity: opacity3, y: y3 }}
-            className="absolute left-0 right-0 md:right-24 md:left-auto top-1/2 -translate-y-1/2 max-w-2xl px-6 md:px-0 text-center md:text-right"
-          >
-            <h2 className="text-3xl md:text-6xl font-bold tracking-tight text-foreground drop-shadow-2xl leading-tight">
-              Bridging Discovery <br className="hidden md:block" /> and Delivery.
-            </h2>
-            <p className="mt-6 text-lg md:text-xl text-foreground/60 font-light drop-shadow-lg max-w-md mx-auto md:ml-auto md:mr-0">
-              Every roadmap purposeful. Every feature earned. Turning complex problems into scalable products that deliver measurable business value.
-            </p>
-          </motion.div>
-        </div>
-
-        {loadedCount < frameCount && (
-          <div className="absolute top-4 right-4 z-50 text-foreground/50 font-mono text-[10px] md:text-xs">
-            Loading Sequence... {Math.round((loadedCount / frameCount) * 100)}%
+            <div className="text-foreground/40 font-mono text-[10px] mt-4 flex items-center justify-center gap-2">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+              DECODING ASSETS TO MEMORY [{loadPercentage}%]
+            </div>
           </div>
-        )}
+        </div>
+      )}
+
+      <div ref={containerRef} className="relative h-[500vh] w-full bg-[#0a1628]">
+        <div className="sticky top-0 h-screen w-full overflow-hidden">
+          <div className="absolute inset-0 z-0 pointer-events-none">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-br from-[#0a1628] via-[#0d2035] to-[#0a1628] blur-[120px] opacity-60" />
+          </div>
+
+          <canvas
+            ref={canvasRef}
+            className="relative h-full w-full block z-10"
+            style={{ willChange: "transform", transform: "translateZ(0)" }}
+          />
+
+          <motion.div
+            style={{ opacity: heroOpacity, scale: heroScale }}
+            className="absolute inset-0 z-[15] pointer-events-none will-change-[opacity,transform]"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/sequence/frame_hero.webp"
+              alt="Anchit Boruah"
+              className="w-full h-full object-cover object-center"
+              fetchPriority="high"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
+          </motion.div>
+
+          <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black to-transparent pointer-events-none z-20" />
+          <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-b from-transparent via-black/20 to-black pointer-events-none z-20" />
+
+          <div className="absolute inset-0 z-30 pointer-events-none flex flex-col justify-center px-6 md:px-24">
+            <motion.div
+              style={{ opacity: opacity1, y: y1 }}
+              className="absolute left-0 right-0 top-1/2 -translate-y-1/2 text-center px-6"
+            >
+              <h1 className="text-5xl md:text-8xl font-bold tracking-tighter text-foreground drop-shadow-2xl">
+                Anchit Boruah
+              </h1>
+              <p className="mt-4 text-xl md:text-3xl text-foreground/70 font-light tracking-wide drop-shadow-lg">
+                Aspiring Product Manager
+              </p>
+            </motion.div>
+
+            <motion.div
+              style={{ opacity: opacity2, y: y2 }}
+              className="absolute left-0 right-0 md:left-24 md:right-auto top-1/2 -translate-y-1/2 max-w-2xl px-6 md:px-0 text-center md:text-left"
+            >
+              <h2 className="text-3xl md:text-6xl font-bold tracking-tight text-foreground drop-shadow-2xl leading-tight">
+                I Build Products <br className="hidden md:block" /> Actually Needed
+              </h2>
+              <p className="mt-6 text-lg md:text-xl text-foreground/60 font-light drop-shadow-lg max-w-md mx-auto md:mx-0">
+                Bridging Strategy, Design, and Execution to deliver solutions that scale and create real business value.
+              </p>
+            </motion.div>
+
+            <motion.div
+              style={{ opacity: opacity3, y: y3 }}
+              className="absolute left-0 right-0 md:right-24 md:left-auto top-1/2 -translate-y-1/2 max-w-2xl px-6 md:px-0 text-center md:text-right"
+            >
+              <h2 className="text-3xl md:text-6xl font-bold tracking-tight text-foreground drop-shadow-2xl leading-tight">
+                Bridging Discovery <br className="hidden md:block" /> and Delivery.
+              </h2>
+              <p className="mt-6 text-lg md:text-xl text-foreground/60 font-light drop-shadow-lg max-w-md mx-auto md:ml-auto md:mr-0">
+                Every roadmap purposeful. Every feature earned. Turning complex problems into scalable products that deliver measurable business value.
+              </p>
+            </motion.div>
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

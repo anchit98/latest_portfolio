@@ -46,7 +46,7 @@ export default function Home() {
       <Contact />
 
       <footer className="w-full py-12 border-t border-foreground/5 bg-background text-center text-foreground/50 font-light text-sm pm-zone">
-        <p>© 2026 Anchit Boruah. All rights reserved.</p>
+        <p>© 2026 Anchit Boruah. All Rights Reserved.</p>
         <p className="mt-2">Built with Next.js & Framer Motion in Google Antigravity.</p>
       </footer>
     </main>
