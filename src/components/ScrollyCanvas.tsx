@@ -74,7 +74,7 @@ export default function ScrollyCanvas() {
     const images: HTMLImageElement[] = new Array(frameCount);
     let mounted = true;
 
-    const loadAndDecode = async (index: number) => {
+    const loadAndDecode = async (index: number, targetFrames: number) => {
       const frameNum = index.toString().padStart(3, "0");
       const src = `/sequence/frame_${frameNum}_delay-0.066s.webp`;
 
@@ -100,7 +100,7 @@ export default function ScrollyCanvas() {
           if (mounted) {
             images[index] = img;
             loadedCount++;
-            setLoadPercentage(Math.round((loadedCount / frameCount) * 100));
+            setLoadPercentage(Math.round((loadedCount / targetFrames) * 100));
           }
           resolve();
         };
@@ -109,15 +109,18 @@ export default function ScrollyCanvas() {
     };
 
     const init = async () => {
+      const mobile = window.innerWidth < 768;
+      const targetFrames = mobile ? 1 : frameCount;
+
       // Parallel batches
       const batches = [];
-      for (let i = 0; i < frameCount; i += 6) {
+      for (let i = 0; i < targetFrames; i += 6) {
         batches.push(
           Promise.all(
-            Array.from({ length: Math.min(6, frameCount - i) }, (_, j) => loadAndDecode(i + j))
+            Array.from({ length: Math.min(6, targetFrames - i) }, (_, j) => loadAndDecode(i + j, targetFrames))
           )
         );
-        await new Promise(r => setTimeout(r, 10)); // Give main thread breathing room
+        if (!mobile) await new Promise(r => setTimeout(r, 10)); // Give main thread breathing room
       }
 
       await Promise.all(batches);
@@ -130,6 +133,7 @@ export default function ScrollyCanvas() {
         canvasRef.current.height = window.innerHeight;
       }
 
+      if (mobile) setLoadPercentage(100);
       setIsReady(true);
       drawFrame(0);
     };
@@ -197,7 +201,7 @@ export default function ScrollyCanvas() {
         </div>
       )}
 
-      <div ref={containerRef} className="relative h-[500vh] w-full bg-[#0a1628]">
+      <div ref={containerRef} className="relative h-[100vh] md:h-[500vh] w-full bg-[#0a1628]">
         <div className="sticky top-0 h-screen w-full overflow-hidden">
           <div className="absolute inset-0 z-0 pointer-events-none">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-br from-[#0a1628] via-[#0d2035] to-[#0a1628] blur-[120px] opacity-60" />
@@ -227,9 +231,11 @@ export default function ScrollyCanvas() {
           <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-b from-transparent via-black/20 to-black pointer-events-none z-20" />
 
           <div className="absolute inset-0 z-30 pointer-events-none flex flex-col justify-center px-6 md:px-24">
+            
+            {/* DESKTOP ANIMATED TEXTS */}
             <motion.div
               style={{ opacity: opacity1, y: y1 }}
-              className="absolute left-0 right-0 top-1/2 -translate-y-1/2 text-center px-6"
+              className="hidden md:block absolute left-0 right-0 top-1/2 -translate-y-1/2 text-center px-6"
             >
               <h1 className="text-5xl md:text-8xl font-bold tracking-tighter text-foreground drop-shadow-2xl">
                 Anchit Boruah
@@ -241,7 +247,7 @@ export default function ScrollyCanvas() {
 
             <motion.div
               style={{ opacity: opacity2, y: y2 }}
-              className="absolute left-0 right-0 md:left-24 md:right-auto top-1/2 -translate-y-1/2 max-w-2xl px-6 md:px-0 text-center md:text-left"
+              className="hidden md:block absolute left-0 right-0 md:left-24 md:right-auto top-1/2 -translate-y-1/2 max-w-2xl px-6 md:px-0 text-center md:text-left"
             >
               <h2 className="text-3xl md:text-6xl font-bold tracking-tight text-foreground drop-shadow-2xl leading-tight">
                 I Build Products <br className="hidden md:block" /> Actually Needed
@@ -253,7 +259,7 @@ export default function ScrollyCanvas() {
 
             <motion.div
               style={{ opacity: opacity3, y: y3 }}
-              className="absolute left-0 right-0 md:right-24 md:left-auto top-1/2 -translate-y-1/2 max-w-2xl px-6 md:px-0 text-center md:text-right"
+              className="hidden md:block absolute left-0 right-0 md:right-24 md:left-auto top-1/2 -translate-y-1/2 max-w-2xl px-6 md:px-0 text-center md:text-right"
             >
               <h2 className="text-3xl md:text-6xl font-bold tracking-tight text-foreground drop-shadow-2xl leading-tight">
                 Bridging Discovery <br className="hidden md:block" /> and Delivery.
@@ -262,6 +268,21 @@ export default function ScrollyCanvas() {
                 Every roadmap purposeful. Every feature earned. Turning complex problems into scalable products that deliver measurable business value.
               </p>
             </motion.div>
+
+            {/* MOBILE STATIC HERO (Hidden on Desktop) */}
+            <div className="md:hidden absolute left-0 right-0 top-1/2 -translate-y-1/2 text-center px-6 pb-12">
+              <h1 className="text-5xl font-bold tracking-tighter text-foreground drop-shadow-2xl">
+                Anchit Boruah
+              </h1>
+              <p className="mt-4 text-xl text-foreground/70 font-light tracking-wide drop-shadow-lg">
+                Aspiring Product Manager
+              </p>
+              
+              <div className="mt-12 mx-auto inline-flex items-center gap-2 px-5 py-2.5 border border-foreground/20 rounded-full bg-background/30 backdrop-blur-md text-foreground/80 text-[10px] tracking-widest uppercase shadow-2xl pointer-events-auto shadow-black/50">
+                <span className="text-base" aria-hidden="true">🖥️</span> Open in desktop for best experience
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
