@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import ChatBot from "@/components/ChatBot";
+import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -33,6 +34,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} antialiased`}>
+        <ServiceWorkerRegistrar />
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

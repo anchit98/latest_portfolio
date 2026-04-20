@@ -14,17 +14,31 @@ export default function ScrollyCanvas() {
     let count = 0;
     const loadedImages: HTMLImageElement[] = new Array(frameCount);
 
-    const loadFrame = (index: number) => {
+    const loadFrame = async (index: number) => {
+      const frameNum = index.toString().padStart(3, "0");
+      const src = `/sequence/frame_${frameNum}_delay-0.066s.webp`;
+
+      // Try Cache Storage first (populated by the service worker)
+      let blobUrl: string | null = null;
+      try {
+        const cache = await caches.open("sequence-cache-v1");
+        const cached = await cache.match(src);
+        if (cached) {
+          const blob = await cached.blob();
+          blobUrl = URL.createObjectURL(blob);
+        }
+      } catch {
+        // Cache API not available or miss — fall through to network
+      }
+
       return new Promise<void>((resolve) => {
         const img = new Image();
-        const frameNum = index.toString().padStart(3, "0");
-        img.src = `/sequence/frame_${frameNum}_delay-0.066s.webp`;
-        
+        img.src = blobUrl || src;
+
         const onSettle = () => {
           loadedImages[index] = img;
           count++;
           setLoadedCount(count);
-          // Periodically update state to draw newly loaded frames
           if (index === 0 || count === frameCount || count % 5 === 0) {
             setImages([...loadedImages]);
           }
@@ -39,7 +53,7 @@ export default function ScrollyCanvas() {
     const loadSequentially = async () => {
       // Prioritize frame 0 to unblock layout
       await loadFrame(0);
-      setImages([...loadedImages]); 
+      setImages([...loadedImages]);
 
       let i = 1;
       const loadNext = () => {
@@ -59,7 +73,7 @@ export default function ScrollyCanvas() {
           }
         }
       };
-      
+
       loadNext();
     };
 
