@@ -104,7 +104,7 @@ export default function ScrollyCanvas() {
           }
           resolve();
         };
-        img.onerror = resolve; // don't hang if error
+        img.onerror = () => resolve(); // don't hang if error
       });
     };
 
