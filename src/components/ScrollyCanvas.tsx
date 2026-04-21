@@ -110,7 +110,7 @@ export default function ScrollyCanvas() {
 
     const init = async () => {
       const mobile = window.innerWidth < 768;
-      const targetFrames = mobile ? 1 : frameCount;
+      const targetFrames = mobile ? 0 : frameCount;
 
       // Parallel batches
       const batches = [];
@@ -209,13 +209,13 @@ export default function ScrollyCanvas() {
 
           <canvas
             ref={canvasRef}
-            className="relative h-full w-full block z-10"
+            className="relative h-full w-full hidden md:block z-10"
             style={{ willChange: "transform", transform: "translateZ(0)" }}
           />
 
           <motion.div
             style={{ opacity: heroOpacity, scale: heroScale }}
-            className="absolute inset-0 z-[15] pointer-events-none will-change-[opacity,transform]"
+            className="hidden md:block absolute inset-0 z-[15] pointer-events-none will-change-[opacity,transform]"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -226,6 +226,18 @@ export default function ScrollyCanvas() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
           </motion.div>
+
+          {/* MOBILE STATIC HERO (Hidden on Desktop) */}
+          <div className="md:hidden absolute inset-0 z-[15] pointer-events-none">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/sequence/frame_hero.webp"
+              alt="Anchit Boruah"
+              className="w-full h-full object-cover object-center"
+              fetchPriority="high"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
+          </div>
 
           <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black to-transparent pointer-events-none z-20" />
           <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-b from-transparent via-black/20 to-black pointer-events-none z-20" />
