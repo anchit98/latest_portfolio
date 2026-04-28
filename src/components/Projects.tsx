@@ -22,48 +22,24 @@ type ProjectType = {
 export const PROJECTS: ProjectType[] = [
   {
     id: "AB001",
-    title: "Reducing Customer Support Load",
-    role: "Swiggy-Case Study",
-    description: "Reduced customer support ticket dependency at Swiggy by identifying issue drivers and defining product levers for lower agent needs and cost savings.",
-    metric: "Efficiency-Driven Cost Savings",
-    image: "/projects/Swiggy Case Study_KPI Tree.webp",
-    fullDescription: "Swiggy's Customer Support Optimization initiative was conceived to address the rising volume of support tickets impacting customer experience and operational costs. By leveraging data-driven guesstimate and root cause analysis, I modeled support demand at scale and identified key drivers of customer complaints. This enabled me to map core business outcomes; reducing support tickets, minimizing agent dependency, and driving cost savings to targeted product outcomes such as lowering issue rates and improving average resolution time.",
+    title: "AI-Powered Advisor",
+    role: "Vibe Coding-P1",
+    description: "Built an AI-powered tool delivering personalized restaurant recommendations to reduce decision fatigue, currently focused on Bangalore for higher data accuracy.",
+    metric: "Rapid Product Execution",
+    image: "/projects/Zomato.RecAi.webp",
+    fullDescription: "Conceptualized and built an end-to-end AI-driven recommendation system leveraging LLM-based reasoning to deliver context-aware restaurant suggestions based on user preferences. Scoped to Bangalore as an MVP to ensure high-quality, curated data and more accurate outputs. Designed the system architecture, integrated AI models, and deployed a scalable full-stack application using AI-assisted development tools, enabling rapid iteration from idea to production.",
     features: [
-      "Identified that even a small % of order issues at scale drives massive support ticket volume.",
-      "Discovered that reducing issue rate has a significantly higher impact than optimizing support capacity.",
-      "Established average handling time as a critical lever influencing agent headcount requirements.",
-      "Quantified that targeted product interventions can reduce support dependency and unlock substantial cost savings."
+      "Developed personalized restaurant recommendations using LLM-based reasoning for context-aware suggestions.",
+      "Implemented an AI-powered full-stack application using AI-assisted development tools.",
+      "Focused on Bangalore as MVP to ensure high-quality data and accurate outputs.",
+      "Designed system architecture with integrated database and backend/frontend deployment pipelines."
     ],
-    tools: ["Whimsical", "Guesstimate", "Product Sense", "Product Thinking"],
-    // To add a downloadable file (PDF, PPTX, etc.):
-    // 1. Drop your file in the 'public/files/' folder.
-    // 2. Add the path here (e.g. "/files/Case Study_Swiggy.pdf"). Leave empty "" to hide the button and preview.
-    downloadUrl: "/files/Case Study_Swiggy.pdf",
-    downloadText: "Download Full Case Study"
+    tools: ["Cursor", "Google Antigravity", "Google Stitch", "Supabase", "Groq", "Render", "Vercel"],
+    downloadUrl: "https://zomato-recai-frontend.vercel.app/",
+    downloadText: "View Live Product"
   },
   {
     id: "AB002",
-    title: "Scaling Platform Users",
-    role: "Peppo-Case Study",
-    description: "Led a growth-focused product strategy for Peppo by identifying high-value user segments through behavioral and demographic analysis.",
-    metric: "Growth Promoting Segmentation",
-    image: "/projects/Peppo User Segmentation.webp",
-    fullDescription: "Peppo's growth strategy was redefined to address declining retention and rising customer acquisition costs despite strong top-of-funnel performance. By leveraging behavioral, demographic, and acquisition data, I developed a structured segmentation model to identify high-value user cohorts and uncover key drivers of retention and churn. This enabled mapping critical business goals—improving retention, reducing CAC inefficiencies, and increasing LTV—to actionable product and growth levers such as personalization, pricing experimentation, and content expansion. My role involved defining segmentation axes, designing a mixed-method user research plan (quantitative and qualitative), and translating insights into a focused growth strategy. The approach emphasized prioritizing high-intent user segments, refining acquisition channels, and aligning product experience with user motivations to drive sustainable growth.",
-    features: [
-      "Identified high-intent user segments through behavioral and demographic analysis.",
-      "Designed a mixed-method research framework combining quantitative and qualitative methods.",
-      "Defined actionable product and growth levers to improve retention and reduce CAC.",
-      "Prioritized high-intent segments and refined acquisition channels to drive sustainable growth."
-    ],
-    tools: ["Data Cleaning", "User Segmentation", "Analytics", "Strategic Thinking"],
-    // Use the downloads array for multiple files
-    downloads: [
-      { url: "/files/Peppo_Problem Statement.docx", text: "Download Problem Statement" },
-      { url: "/files/Cracking Growth at Peppo_Working Document.xlsx", text: "Download Solution Document" }
-    ]
-  },
-  {
-    id: "AB003",
     title: "Increasing Voice Usage_PRD",
     role: "ChatGPT-Case Study",
     description: "Led a product initiative to improve adoption of ChatGPT's conversational feature by addressing discoverability and onboarding gaps documented into a detailed PRD.",
@@ -79,6 +55,44 @@ export const PROJECTS: ProjectType[] = [
     tools: ["Whimsical", "ChatGPT", "Prioritization", "RICE Framework"],
     downloadUrl: "/files/Increasing ChatGPT's Voice Tech Usage_PRD.pdf",
     downloadText: "Download Full PRD"
+  },
+  {
+    id: "AB003",
+    title: "Reducing Customer Support Load",
+    role: "Swiggy-Case Study",
+    description: "Reduced customer support ticket dependency at Swiggy by identifying issue drivers and defining product levers for lower agent needs and cost savings.",
+    metric: "Efficiency-Driven Cost Savings",
+    image: "/projects/Swiggy Case Study_KPI Tree.webp",
+    fullDescription: "Swiggy's Customer Support Optimization initiative was conceived to address the rising volume of support tickets impacting customer experience and operational costs. By leveraging data-driven guesstimate and root cause analysis, I modeled support demand at scale and identified key drivers of customer complaints. This enabled me to map core business outcomes; reducing support tickets, minimizing agent dependency, and driving cost savings to targeted product outcomes such as lowering issue rates and improving average resolution time.",
+    features: [
+      "Identified that even a small % of order issues at scale drives massive support ticket volume.",
+      "Discovered that reducing issue rate has a significantly higher impact than optimizing support capacity.",
+      "Established average handling time as a critical lever influencing agent headcount requirements.",
+      "Quantified that targeted product interventions can reduce support dependency and unlock substantial cost savings."
+    ],
+    tools: ["Whimsical", "Guesstimate", "Product Sense", "Product Thinking"],
+    downloadUrl: "/files/Case Study_Swiggy.pdf",
+    downloadText: "Download Full Case Study"
+  },
+  {
+    id: "AB004",
+    title: "Scaling Platform Users",
+    role: "Peppo-Case Study",
+    description: "Led a growth-focused product strategy for Peppo by identifying high-value user segments through behavioral and demographic analysis.",
+    metric: "Growth Promoting Segmentation",
+    image: "/projects/Peppo User Segmentation.webp",
+    fullDescription: "Peppo's growth strategy was redefined to address declining retention and rising customer acquisition costs despite strong top-of-funnel performance. By leveraging behavioral, demographic, and acquisition data, I developed a structured segmentation model to identify high-value user cohorts and uncover key drivers of retention and churn. This enabled mapping critical business goals—improving retention, reducing CAC inefficiencies, and increasing LTV—to actionable product and growth levers such as personalization, pricing experimentation, and content expansion. My role involved defining segmentation axes, designing a mixed-method user research plan (quantitative and qualitative), and translating insights into a focused growth strategy. The approach emphasized prioritizing high-intent user segments, refining acquisition channels, and aligning product experience with user motivations to drive sustainable growth.",
+    features: [
+      "Identified high-intent user segments through behavioral and demographic analysis.",
+      "Designed a mixed-method research framework combining quantitative and qualitative methods.",
+      "Defined actionable product and growth levers to improve retention and reduce CAC.",
+      "Prioritized high-intent segments and refined acquisition channels to drive sustainable growth."
+    ],
+    tools: ["Data Cleaning", "User Segmentation", "Analytics", "Strategic Thinking"],
+    downloads: [
+      { url: "/files/Peppo_Problem Statement.docx", text: "Download Problem Statement" },
+      { url: "/files/Cracking Growth at Peppo_Working Document.xlsx", text: "Download Solution Document" }
+    ]
   },
 ];
 
