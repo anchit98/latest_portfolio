@@ -40,6 +40,24 @@ export const PROJECTS: ProjectType[] = [
   },
   {
     id: "AB002",
+    title: "Swish - Promise vs Reality",
+    role: "FoodTech Deep-Dive",
+    description: "Identified a gap in Swish’s 10-minute delivery promise by mapping issues across kitchen, dispatch, and support via detailed PM-first documentation.",
+    metric: "End-to-End Product Optimization",
+    image: "/projects/swish.webp",
+    fullDescription: "Swish’s 10-minute delivery promise, while compelling, showed inconsistency due to breakdowns in kitchen readiness, delivery assignment, and customer support. This project focused on identifying SLA failure points and solving for the gap between promise and execution for its core 20–35 urban user segment. By analyzing user feedback, operational constraints, and delivery lifecycle data, I mapped business goals—improving reliability, customer trust, and retention—to targeted product interventions across dispatch logic, dynamic SLA setting, and service recovery.",
+    features: [
+      "Identified SLA failure points in kitchen readiness, dispatch, and customer support.",
+      "Analyzed user feedback, operational constraints, and delivery lifecycle data to identify root causes.",
+      "Mapped business goals-improving reliability, customer trust, and retention.",
+      "Authored a comprehensive end-to-end documents and project execution plan."
+    ],
+    tools: ["Cursor", "Google Antigravity", "Google Stitch", "Product Thinking", "Problem Decomposition", "Prioritization", "RICE Framework", "Estimation"],
+    downloadUrl: "https://drive.google.com/drive/folders/1eF_GObhQnozQfDENCF5SmTSZhJpX3CSN?usp=sharing",
+    downloadText: "View Optimization Plan"
+  },
+  {
+    id: "AB003",
     title: "Increasing Voice Usage_PRD",
     role: "ChatGPT-Case Study",
     description: "Led a product initiative to improve adoption of ChatGPT's conversational feature by addressing discoverability and onboarding gaps documented into a detailed PRD.",
@@ -57,7 +75,7 @@ export const PROJECTS: ProjectType[] = [
     downloadText: "Download Full PRD"
   },
   {
-    id: "AB003",
+    id: "AB004",
     title: "Reducing Customer Support Load",
     role: "Swiggy-Case Study",
     description: "Reduced customer support ticket dependency at Swiggy by identifying issue drivers and defining product levers for lower agent needs and cost savings.",
@@ -75,7 +93,7 @@ export const PROJECTS: ProjectType[] = [
     downloadText: "Download Full Case Study"
   },
   {
-    id: "AB004",
+    id: "AB005",
     title: "Scaling Platform Users",
     role: "Peppo-Case Study",
     description: "Led a growth-focused product strategy for Peppo by identifying high-value user segments through behavioral and demographic analysis.",
