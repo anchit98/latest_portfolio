@@ -19,6 +19,8 @@ const TECH_STACK = [
   { name: "Microsoft Visio", icon: "/tech/visio.webp" },
   { name: "Microsoft Office", icon: "/tech/office.webp" },
   { name: "Power BI", icon: "/tech/powerBI.webp" },
+  { name: "Cursor", icon: "/tech/Cursor_logo.webp" },
+  { name: "Google Antigravity", icon: "/tech/Antigravity.webp" },
 ];
 
 export default function TechStack() {

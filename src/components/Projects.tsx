@@ -22,8 +22,44 @@ type ProjectType = {
 export const PROJECTS: ProjectType[] = [
   {
     id: "AB001",
-    title: "AI-Powered Advisor",
+    title: "AI Review Advisory",
     role: "Vibe Coding-P1",
+    description: "Built an AI-powered review intelligence and advisory system that analyzes large-scale App Store and Play Store feedback to identify user pain points and sentiment trends.",
+    metric: "Accurate VoC Interpretation",
+    image: "/projects/GrowwReviewAdvisory.webp",
+    fullDescription: "Conceptualized and built an end-to-end AI-powered review intelligence and advisory system that ingests and analyzes App Store and Play Store reviews using LLM-based synthesis to identify recurring user pain points, sentiment trends, and actionable product recommendations. Designed a stateful rolling review corpus and automated weekly insight generation workflow integrated with Google Docs and Gmail MCP servers for report creation and stakeholder-ready email drafts with human-in-the-loop review.",
+    features: [
+      "Developed an AI-powered review intelligence system using LLM-based synthesis to identify user pain points, sentiment trends, and actionable product recommendations.",
+      "Implemented automated App Store and Play Store review ingestion with rolling corpus management for continuous insight generation.",
+      "Integrated Google Docs and Gmail MCP servers to automate stakeholder-ready report creation and email draft workflows.",
+      "Designed scalable backend workflows and full-stack architecture using AI-assisted development tools for rapid deployment and iteration."
+    ],
+    tools: ["Cursor", "Google Stitch", "Groq", "Render", "Vercel", "MCP", "FastAPI"],
+    downloadUrl: "https://groww-review-advisory.vercel.app/",
+    downloadText: "View Live Product"
+  },
+  {
+    id: "AB002",
+    title: "AI Mutual Fund Advisor",
+    role: "Vibe Coding-P2",
+    description: "Built an AI-powered mutual fund Q&A chatbot using RAG architecture and Groww fund data to deliver reliable answers through automated retrieval and LLM-based responses.",
+    metric: "Centralized Source of Truth",
+    image: "/projects/GrowFundGyaan.webp",
+    fullDescription: "Conceptualized and built an end-to-end AI-powered mutual fund Q&A chatbot leveraging Retrieval-Augmented Generation (RAG) architecture to provide factual, context-grounded responses using ingested Groww mutual fund data. Designed and automated the complete data pipeline including web scraping, parsing, chunking, embedding generation, and vector database storage, enabling efficient semantic retrieval and low-latency answer generation through LLM integration. Architected the system to minimize hallucinations by restricting responses to retrieved factual context, creating a scalable and reliable investment information assistant.",
+    features: [
+      "Developed a RAG-based mutual fund Q&A chatbot delivering factual, context-grounded responses using Groww fund data.",
+      "Implemented automated data ingestion, parsing, chunking, embedding generation, and vector database retrieval pipelines.",
+      "Integrated LLM-based answer generation with semantic search to reduce hallucinations and improve response reliability.",
+      "Designed scalable system architecture with vector search, backend orchestration, and full-stack deployment pipelines."
+    ],
+    tools: ["Cursor", "ChromaDB", "Google Stitch", "Supabase", "Groq", "Render", "Vercel", "bge-small-en", "FastAPI"],
+    downloadUrl: "https://growwfundgenai.vercel.app/",
+    downloadText: "View Live Product"
+  },
+  {
+    id: "AB003",
+    title: "AI Restaurant Suggestor",
+    role: "Vibe Coding-P3",
     description: "Built an AI-powered tool delivering personalized restaurant recommendations to reduce decision fatigue, currently focused on Bangalore for higher data accuracy.",
     metric: "Rapid Product Execution",
     image: "/projects/Zomato.RecAi.webp",
@@ -34,12 +70,12 @@ export const PROJECTS: ProjectType[] = [
       "Focused on Bangalore as MVP to ensure high-quality data and accurate outputs.",
       "Designed system architecture with integrated database and backend/frontend deployment pipelines."
     ],
-    tools: ["Cursor", "Google Antigravity", "Google Stitch", "Supabase", "Groq", "Render", "Vercel"],
+    tools: ["Cursor", "Google Antigravity", "Google Stitch", "Supabase", "Groq", "Render", "Vercel", "FastAPI"],
     downloadUrl: "https://zomato-recai-frontend.vercel.app/",
     downloadText: "View Live Product"
   },
   {
-    id: "AB002",
+    id: "AB004",
     title: "Swish - Promise vs Reality",
     role: "FoodTech Deep-Dive",
     description: "Identified a gap in Swish’s 10-minute delivery promise by mapping issues across kitchen, dispatch, and support via detailed PM-first documentation.",
@@ -57,7 +93,7 @@ export const PROJECTS: ProjectType[] = [
     downloadText: "View Optimization Plan"
   },
   {
-    id: "AB003",
+    id: "AB005",
     title: "Increasing Voice Usage_PRD",
     role: "ChatGPT-Case Study",
     description: "Led a product initiative to improve adoption of ChatGPT's conversational feature by addressing discoverability and onboarding gaps documented into a detailed PRD.",
@@ -75,7 +111,7 @@ export const PROJECTS: ProjectType[] = [
     downloadText: "Download Full PRD"
   },
   {
-    id: "AB004",
+    id: "AB006",
     title: "Reducing Customer Support Load",
     role: "Swiggy-Case Study",
     description: "Reduced customer support ticket dependency at Swiggy by identifying issue drivers and defining product levers for lower agent needs and cost savings.",
@@ -93,7 +129,7 @@ export const PROJECTS: ProjectType[] = [
     downloadText: "Download Full Case Study"
   },
   {
-    id: "AB005",
+    id: "AB007",
     title: "Scaling Platform Users",
     role: "Peppo-Case Study",
     description: "Led a growth-focused product strategy for Peppo by identifying high-value user segments through behavioral and demographic analysis.",
