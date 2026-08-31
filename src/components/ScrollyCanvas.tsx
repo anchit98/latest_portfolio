@@ -253,7 +253,7 @@ export default function ScrollyCanvas() {
                 Anchit Boruah
               </h1>
               <p className="mt-4 text-xl md:text-3xl text-foreground/70 font-light tracking-wide drop-shadow-lg">
-                Aspiring Product Manager
+                Established Product Manager
               </p>
             </motion.div>
 
@@ -287,7 +287,7 @@ export default function ScrollyCanvas() {
                 Anchit Boruah
               </h1>
               <p className="mt-4 text-xl text-foreground/70 font-light tracking-wide drop-shadow-lg">
-                Aspiring Product Manager
+                Established Product Manager
               </p>
             </div>
 
