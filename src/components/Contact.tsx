@@ -1,24 +1,51 @@
 "use client";
 
-import { Mail, Linkedin, Github, Send, CheckCircle, Instagram } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { FormEvent, useState } from "react";
+import { ArrowUpRight, ArrowUp, Check, Copy, Github, Instagram, Linkedin, Phone, Send } from "lucide-react";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { usePrefersReducedMotion } from "@/hooks/useMediaQuery";
+import { FormEvent, useRef, useState } from "react";
+import RevealText from "./RevealText";
+import { StoryMap } from "./story/Chapter";
+
+const EMAIL = "jobsforanchit.boruah@gmail.com";
+const PHONE = { display: "+91 99109 80793", href: "tel:+919910980793" };
+const SOCIALS = [
+  { label: "LinkedIn", handle: "@anchitboruah", href: "https://linkedin.com/in/anchitboruah/", Icon: Linkedin },
+  { label: "GitHub", handle: "@anchit98", href: "https://github.com/anchit98/", Icon: Github },
+  { label: "Instagram", handle: "@anchitboruah", href: "https://instagram.com/anchitboruah/", Icon: Instagram },
+];
+
+const fieldClass =
+  "peer w-full border-b border-ink/20 bg-transparent pb-3 pt-6 text-lg max-sm:text-center text-ink placeholder-transparent transition-colors focus:border-ink focus:outline-none";
+const labelClass =
+  "pointer-events-none absolute left-0 top-0 max-sm:right-0 max-sm:text-center font-mono text-[10.5px] uppercase tracking-[0.2em] text-ink/50 transition-all peer-placeholder-shown:top-7 peer-placeholder-shown:font-sans peer-placeholder-shown:text-lg peer-placeholder-shown:normal-case peer-placeholder-shown:tracking-normal peer-focus:top-0 peer-focus:font-mono peer-focus:text-[10.5px] peer-focus:uppercase peer-focus:tracking-[0.2em] peer-focus:text-ink";
 
 export default function Contact() {
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const reduce = usePrefersReducedMotion();
+
+  // The section opens like a window: the daylight panel widens from an inset frame to full bleed.
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "start 15%"] });
+  const inset = useTransform(scrollYProgress, [0, 1], [8, 0]);
+  const radius = useTransform(scrollYProgress, [0, 1], [40, 0]);
+  const clipPath = useTransform([inset, radius], ([i, r]: number[]) => `inset(0% ${i}% 0% ${i}% round ${r}px ${r}px 0 0)`);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(false);
 
     try {
       const response = await fetch("https://formspree.io/f/xreykdwe", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify(formData),
       });
@@ -26,199 +53,222 @@ export default function Contact() {
       if (response.ok) {
         setSubmitted(true);
       } else {
-        alert("Oops! There was a problem submitting your form. Please try again.");
+        setError(true);
       }
-    } catch (error) {
-      console.error("Form submission error:", error);
-      alert("Oops! There was a problem submitting your form. Please try again.");
+    } catch (err) {
+      console.error("Form submission error:", err);
+      setError(true);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const copyEmail = async () => {
+    try {
+      await navigator.clipboard.writeText(EMAIL);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {}
+  };
+
   return (
-    <section id="contact" className="relative w-full bg-background text-foreground py-32 px-6 md:px-24 z-20 overflow-hidden">
-
-      {/* Liquid Glass Background Effects */}
-      <div className="absolute top-0 right-0 w-[50vw] h-[50vw] bg-emerald-500/10 rounded-full blur-[150px] -translate-y-1/2 translate-x-1/3 pointer-events-none mix-blend-screen overflow-hidden" />
-      <div className="absolute bottom-0 left-0 w-[40vw] h-[40vw] bg-blue-500/10 rounded-full blur-[150px] translate-y-1/3 -translate-x-1/3 pointer-events-none mix-blend-screen overflow-hidden" />
-
-      <div className="max-w-6xl mx-auto flex flex-col items-center relative z-10">
-
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-16 pm-zone overflow-visible"
-        >
-          <h2 className="text-4xl md:text-7xl font-bold tracking-tighter mb-6 bg-gradient-to-br from-foreground to-foreground/50 bg-clip-text text-transparent leading-[1.3] overflow-visible">
-            Let's build together.
-          </h2>
-          <p className="text-foreground/60 max-w-2xl mx-auto text-lg font-light">
-            I'm always open to discussing new projects, creative ideas, or opportunities to be part of your vision. Fast-track to my inbox below.
+    <section ref={ref} id="contact" data-chapter="10" data-chapter-title="Next chapter" className="relative z-20 bg-[linear-gradient(to_bottom,var(--color-graphite)_50%,var(--color-daylight)_50%)]">
+      <motion.div style={reduce ? undefined : { clipPath }} className="bg-daylight text-ink">
+        <div className="mx-auto max-w-[1440px] px-5 pb-10 pt-28 max-sm:text-center sm:px-8 lg:px-12 lg:pt-40 xl:px-20">
+          <p className="flex flex-wrap items-center gap-x-4 font-mono text-[11px] uppercase tracking-[0.2em] text-ink/50 max-sm:justify-center">
+            <span className="text-oak-deep">Chapter 10</span>
+            <span>Next chapter</span>
           </p>
-        </motion.div>
+          <RevealText
+            as="h2"
+            segments={["Let's build", { text: "together.", className: "font-serif italic font-normal tracking-[-0.01em] text-oak-deep" }]}
+            className="mt-6 text-[clamp(3.2rem,10vw,11rem)] font-medium leading-[0.88] tracking-[-0.055em]"
+          />
+          <p className="mt-8 max-w-xl text-lg leading-relaxed text-ink/60 max-sm:mx-auto">
+            Open to new projects, ideas and opportunities. Fast-track to my inbox, or just call.
+          </p>
+          <div className="lg:max-w-md">
+            <StoryMap index={10} tone="light" />
+          </div>
 
-        {/* Content Details */}
-        <div className="flex flex-col md:flex-row w-full gap-8 justify-center items-stretch pm-zone">
-
-          {/* Left Glass Card: Quick Links */}
-          <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="w-full md:w-[400px] flex flex-col justify-center gap-8 bg-foreground/5 backdrop-blur-2xl border border-foreground/10 rounded-3xl p-10 shadow-[0_8px_32px_0_rgba(0,0,0,0.1)]"
-          >
-            <a href="mailto:jobsforanchit.boruah@gmail.com" aria-label="Send an email to Anchit Boruah" className="group flex items-center gap-6 hover:-translate-y-1 transition-transform pm-glass-hover p-4 rounded-2xl">
-              <div className="p-4 bg-background/50 rounded-full shadow-inner text-emerald-500 group-hover:scale-110 transition-transform">
-                <Mail className="w-6 h-6" aria-hidden="true" />
-              </div>
-              <div>
-                <div className="text-foreground/50 text-xs font-bold uppercase tracking-widest mb-1">Direct Email</div>
-                <div className="font-medium break-all">jobsforanchit.boruah@gmail.com</div>
-              </div>
-            </a>
-
-            <a href="https://linkedin.com/in/anchitboruah/" target="_blank" rel="noreferrer" aria-label="Visit Anchit Boruah's LinkedIn profile" className="group flex items-center gap-6 hover:-translate-y-1 transition-transform pm-glass-hover p-4 rounded-2xl">
-              <div className="p-4 bg-background/50 rounded-full shadow-inner text-blue-500 group-hover:scale-110 transition-transform">
-                <Linkedin className="w-6 h-6" aria-hidden="true" />
-              </div>
-              <div>
-                <div className="text-foreground/50 text-xs font-bold uppercase tracking-widest mb-1">LinkedIn</div>
-                <div className="font-medium">@anchitboruah</div>
-              </div>
-            </a>
-
-            <a href="https://github.com/anchit98/" target="_blank" rel="noreferrer" aria-label="Visit Anchit Boruah's GitHub profile" className="group flex items-center gap-6 hover:-translate-y-1 transition-transform pm-glass-hover p-4 rounded-2xl">
-              <div className="p-4 bg-background/50 rounded-full shadow-inner text-foreground/80 group-hover:scale-110 transition-transform">
-                <Github className="w-6 h-6" aria-hidden="true" />
-              </div>
-              <div>
-                <div className="text-foreground/50 text-xs font-bold uppercase tracking-widest mb-1">GitHub</div>
-                <div className="font-medium">@anchit98</div>
-              </div>
-            </a>
-
-            <a href="https://instagram.com/anchitboruah/" target="_blank" rel="noreferrer" aria-label="Visit Anchit Boruah's Instagram profile" className="group flex items-center gap-6 hover:-translate-y-1 transition-transform pm-glass-hover p-4 rounded-2xl">
-              <div className="p-4 bg-background/50 rounded-full shadow-inner text-foreground/80 group-hover:scale-110 transition-transform">
-                <Instagram className="w-6 h-6" aria-hidden="true" />
-              </div>
-              <div>
-                <div className="text-foreground/50 text-xs font-bold uppercase tracking-widest mb-1">Instagram</div>
-                <div className="font-medium">@anchitboruah</div>
-              </div>
-            </a>
-          </motion.div>
-
-
-          {/* Right Glass Card: Email Form */}
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
-            className="w-full md:w-[600px] min-h-[400px] flex items-center justify-center bg-foreground/5 backdrop-blur-2xl border border-foreground/10 rounded-3xl p-10 shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] overflow-hidden"
-          >
-            <AnimatePresence mode="wait">
-              {!submitted ? (
-                <motion.form
-                  key="contact-form"
-                  initial={{ opacity: 1 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="flex flex-col gap-8 w-full h-full justify-between"
-                  onSubmit={handleSubmit}
-                  aria-label="Contact form"
+          <div className="mt-20 grid gap-16 lg:mt-28 lg:grid-cols-2 lg:gap-24">
+            {/* Direct lines */}
+            <div>
+              <p className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-ink/50">Direct Email</p>
+              <div className="mt-4 flex flex-wrap items-center gap-3 max-sm:justify-center">
+                <a
+                  href={`mailto:${EMAIL}`}
+                  aria-label="Send an email to Anchit Boruah"
+                  className="group relative text-[clamp(1.15rem,2.4vw,2rem)] font-medium tracking-[-0.02em]"
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {EMAIL}
+                  <span className="absolute -bottom-1 left-0 h-px w-full origin-right scale-x-0 bg-ink transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:origin-left group-hover:scale-x-100" />
+                </a>
+                <button
+                  onClick={copyEmail}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 px-3 py-1.5 font-mono text-[10.5px] uppercase tracking-[0.16em] text-ink/60 transition-colors hover:border-ink hover:text-ink"
+                  aria-label="Copy email address"
+                >
+                  {copied ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : <Copy className="h-3.5 w-3.5" aria-hidden="true" />}
+                  <span aria-live="polite">{copied ? "Copied" : "Copy"}</span>
+                </button>
+              </div>
+
+              <p className="mt-10 font-mono text-[10.5px] uppercase tracking-[0.2em] text-ink/50">Direct line</p>
+              <a
+                href={PHONE.href}
+                aria-label={`Call Anchit Boruah on ${PHONE.display}`}
+                className="group relative mt-4 inline-flex items-center gap-3 text-[clamp(1.15rem,2.4vw,2rem)] font-medium tracking-[-0.02em]"
+              >
+                <Phone className="h-5 w-5 text-oak-deep" aria-hidden="true" />
+                {PHONE.display}
+                <span className="absolute -bottom-1 left-8 right-0 h-px origin-right scale-x-0 bg-ink transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:origin-left group-hover:scale-x-100" />
+              </a>
+
+              <ul className="mt-14 border-t border-ink/15">
+                {SOCIALS.map((s) => (
+                  <li key={s.label}>
+                    <a
+                      href={s.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`Visit Anchit Boruah's ${s.label} profile`}
+                      className="group flex items-center justify-between border-b border-ink/15 py-5 max-sm:justify-center max-sm:gap-4"
+                    >
+                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-ink/15 transition-colors duration-500 group-hover:border-ink group-hover:bg-ink group-hover:text-mist sm:mr-5">
+                        <s.Icon className="h-[18px] w-[18px]" aria-hidden="true" />
+                      </span>
+                      <span className="flex flex-1 items-baseline gap-4 max-sm:flex-none max-sm:flex-col max-sm:items-center max-sm:gap-1">
+                        <span className="text-2xl font-medium tracking-[-0.03em] transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-2 sm:text-3xl">
+                          {s.label}
+                        </span>
+                        <span className="font-mono text-xs text-ink/45">{s.handle}</span>
+                      </span>
+                      <ArrowUpRight className="h-5 w-5 text-ink/50 transition-all duration-500 group-hover:rotate-45 group-hover:text-ink" aria-hidden="true" />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Form */}
+            <div className="min-h-[420px]">
+              <AnimatePresence mode="wait">
+                {!submitted ? (
+                  <motion.form
+                    key="contact-form"
+                    exit={{ opacity: 0, y: -20 }}
+                    className="flex flex-col gap-8"
+                    onSubmit={handleSubmit}
+                    aria-label="Contact form"
+                  >
+                    <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+                      <div className="relative">
+                        <input
+                          id="contact-name"
+                          type="text"
+                          name="name"
+                          required
+                          aria-required="true"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          className={fieldClass}
+                          placeholder="Name"
+                        />
+                        <label htmlFor="contact-name" className={labelClass}>Name</label>
+                      </div>
+                      <div className="relative">
+                        <input
+                          id="contact-email"
+                          type="email"
+                          name="email"
+                          required
+                          aria-required="true"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          className={fieldClass}
+                          placeholder="Email Address"
+                        />
+                        <label htmlFor="contact-email" className={labelClass}>Email Address</label>
+                      </div>
+                    </div>
                     <div className="relative">
-                      <input
-                        id="contact-name"
-                        type="text"
-                        name="name"
+                      <textarea
+                        id="contact-message"
+                        name="message"
                         required
                         aria-required="true"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="peer w-full bg-transparent border-b border-foreground/20 py-3 text-foreground focus:outline-none focus:border-emerald-500 transition-colors placeholder-transparent"
-                        placeholder="Name"
+                        rows={5}
+                        value={formData.message}
+                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                        className={`${fieldClass} resize-none`}
+                        placeholder="Message"
                       />
-                      <label htmlFor="contact-name" className="absolute left-0 -top-3.5 text-xs text-foreground/50 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3 peer-focus:-top-3.5 peer-focus:text-xs peer-focus:text-emerald-500 cursor-text">Name</label>
+                      <label htmlFor="contact-message" className={labelClass}>How can I help you?</label>
                     </div>
 
-                    <div className="relative">
-                      <input
-                        id="contact-email"
-                        type="email"
-                        name="email"
-                        required
-                        aria-required="true"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="peer w-full bg-transparent border-b border-foreground/20 py-3 text-foreground focus:outline-none focus:border-emerald-500 transition-colors placeholder-transparent"
-                        placeholder="Email Address"
-                      />
-                      <label htmlFor="contact-email" className="absolute left-0 -top-3.5 text-xs text-foreground/50 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3 peer-focus:-top-3.5 peer-focus:text-xs peer-focus:text-emerald-500 cursor-text">Email Address</label>
+                    <div className="flex flex-wrap items-center justify-between gap-6 max-sm:justify-center">
+                      <p role="alert" className="text-sm text-[#a33a2a]">
+                        {error && "Oops! There was a problem submitting your form. Please try again."}
+                      </p>
+                      {/* Raised key: a solid base edge below the face, which sinks onto it when pressed. */}
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="group inline-flex items-center gap-3 rounded-xl bg-ink px-7 py-4 text-[15px] font-medium text-mist shadow-[0_6px_0_0_#000,0_14px_24px_-8px_rgba(25,24,27,0.55)] transition-[transform,box-shadow,background-color] duration-150 hover:-translate-y-0.5 hover:bg-[#26252a] hover:shadow-[0_8px_0_0_#000,0_18px_28px_-8px_rgba(25,24,27,0.55)] active:translate-y-[6px] active:shadow-[0_0_0_0_#000,0_4px_10px_-4px_rgba(25,24,27,0.5)] disabled:pointer-events-none disabled:opacity-60 max-sm:w-full max-sm:justify-center"
+                        aria-label={isSubmitting ? "Sending your message" : "Send your message"}
+                      >
+                        {isSubmitting ? "Sending..." : "Send message"}
+                        <Send className="h-4 w-4 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
+                      </button>
                     </div>
-                  </div>
-
-                  <div className="relative flex-grow">
-                    <textarea
-                      id="contact-message"
-                      name="message"
-                      required
-                      aria-required="true"
-                      rows={4}
-                      value={formData.message}
-                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                      className="peer w-full h-full bg-transparent border-b border-foreground/20 py-3 text-foreground focus:outline-none focus:border-emerald-500 transition-colors placeholder-transparent resize-none"
-                      placeholder="Message"
-                    />
-                    <label htmlFor="contact-message" className="absolute left-0 -top-3.5 text-xs text-foreground/50 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3 peer-focus:-top-3.5 peer-focus:text-xs peer-focus:text-emerald-500 cursor-text">How can I help you?</label>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="group w-full md:w-auto self-end bg-foreground text-background hover:bg-emerald-500 hover:text-white px-8 py-4 rounded-full font-bold transition-all flex items-center justify-center gap-3 pm-glass-hover disabled:opacity-50 disabled:cursor-not-allowed"
-                    aria-label={isSubmitting ? "Sending your message" : "Send your message"}
+                  </motion.form>
+                ) : (
+                  <motion.div
+                    key="thank-you"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex h-full flex-col justify-center max-sm:items-center"
+                    role="status"
+                    aria-live="polite"
                   >
-                    {isSubmitting ? "Sending..." : "Send Message"}
-                    <Send className="w-4 h-4 group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
-                  </button>
-                </motion.form>
-              ) : (
-                <motion.div
-                  key="thank-you"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex flex-col items-center text-center gap-4"
-                  role="status"
-                  aria-live="polite"
-                >
-                  <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mb-4">
-                    <CheckCircle className="w-10 h-10 text-emerald-500" aria-hidden="true" />
-                  </div>
-                  <h3 className="text-3xl font-bold text-foreground">Message Sent!</h3>
-                  <p className="text-foreground/60 text-lg font-light max-w-sm">
-                    Thanks for reaching out! I'll get back to you soon.
-                  </p>
-                  <button
-                    onClick={() => setSubmitted(false)}
-                    className="mt-6 text-sm font-medium text-emerald-500 hover:text-emerald-400 transition-colors"
-                  >
-                    Send another message
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                    <span className="grid h-14 w-14 place-items-center rounded-full bg-ink text-mist">
+                      <Check className="h-6 w-6" aria-hidden="true" />
+                    </span>
+                    <h3 className="mt-8 text-5xl font-medium tracking-[-0.04em]">Message Sent!</h3>
+                    <p className="mt-4 max-w-sm text-lg text-ink/60">Thanks for reaching out! I&apos;ll get back to you soon.</p>
+                    <button
+                      onClick={() => setSubmitted(false)}
+                      className="mt-8 w-fit font-mono text-[11px] uppercase tracking-[0.2em] text-ink/60 underline-offset-4 hover:text-ink hover:underline"
+                    >
+                      Send another message
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
 
-          </motion.div>
-
+          <footer className="mt-28 border-t border-ink/15 pt-8 lg:mt-40">
+            <div className="flex flex-col gap-6 text-sm text-ink/55 max-sm:items-center sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p>© 2026 Anchit Boruah. All Rights Reserved.</p>
+                <p className="mt-1">Built with Next.js &amp; Framer Motion in Claude Code.</p>
+              </div>
+              <a href="#top" className="group inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] hover:text-ink">
+                Back to top
+                <ArrowUp className="h-4 w-4 transition-transform duration-500 group-hover:-translate-y-1" aria-hidden="true" />
+              </a>
+            </div>
+            <p
+              aria-hidden="true"
+              className="mt-10 select-none whitespace-nowrap text-center text-[12.6vw] font-semibold leading-[0.8] tracking-[-0.065em] text-ink/[0.08] 2xl:text-[180px]"
+            >
+              Anchit Boruah
+            </p>
+          </footer>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
-

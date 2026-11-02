@@ -1,411 +1,383 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, X, Download } from "lucide-react";
+import { createContext, useContext, useEffect, useEffectEvent, useRef, useState } from "react";
+import { ArrowUpRight, ArrowRight, ArrowLeft, X, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { PROJECTS, type ProjectKind, type ProjectType } from "@/content/projects";
 
-type ProjectType = {
-  id: string;
-  title: string;
-  role: string;
-  description: string;
-  metric: string;
-  image: string;
-  fullDescription: string;
-  features: string[];
-  tools: string[];
-  downloadUrl?: string;
-  downloadText?: string;
-  downloads?: { url: string; text: string }[];
+export { PROJECTS };
+
+const GROUPS: { kind: ProjectKind; title: string; note: string; dot: string }[] = [
+  { kind: "work", title: "Shipped at work", note: "Real products, real users, measured outcomes", dot: "bg-oak" },
+  { kind: "build", title: "Built by me", note: "Independent AI products, live or working", dot: "bg-steel" },
+  { kind: "case", title: "Product case studies", note: "Concept work on public problems", dot: "bg-mist/50" },
+];
+const KIND_LABEL: Record<ProjectKind, string> = { work: "Shipped at work", build: "Independent build", case: "Concept case study" };
+
+const isLocalFile = (url: string) => url.startsWith("/files/");
+const GLOW: Record<ProjectKind, string> = {
+  work: "bg-[radial-gradient(90%_75%_at_100%_100%,rgba(227,178,131,0.22),transparent_65%)]",
+  build: "bg-[radial-gradient(90%_75%_at_100%_100%,rgba(169,189,208,0.2),transparent_65%)]",
+  case: "bg-[radial-gradient(90%_75%_at_100%_100%,rgba(236,233,228,0.1),transparent_65%)]",
 };
 
-export const PROJECTS: ProjectType[] = [
-  {
-    id: "AB001",
-    title: "AI Review Advisory",
-    role: "Vibe Coding-P1",
-    description: "Built an AI-powered review intelligence and advisory system that analyzes large-scale App Store and Play Store feedback to identify user pain points and sentiment trends.",
-    metric: "Accurate VoC Interpretation",
-    image: "/projects/GrowwReviewAdvisory.webp",
-    fullDescription: "Conceptualized and built an end-to-end AI-powered review intelligence and advisory system that ingests and analyzes App Store and Play Store reviews using LLM-based synthesis to identify recurring user pain points, sentiment trends, and actionable product recommendations. Designed a stateful rolling review corpus and automated weekly insight generation workflow integrated with Google Docs and Gmail MCP servers for report creation and stakeholder-ready email drafts with human-in-the-loop review.",
-    features: [
-      "Developed an AI-powered review intelligence system using LLM-based synthesis to identify user pain points, sentiment trends, and actionable product recommendations.",
-      "Implemented automated App Store and Play Store review ingestion with rolling corpus management for continuous insight generation.",
-      "Integrated Google Docs and Gmail MCP servers to automate stakeholder-ready report creation and email draft workflows.",
-      "Designed scalable backend workflows and full-stack architecture using AI-assisted development tools for rapid deployment and iteration."
-    ],
-    tools: ["Cursor", "Google Stitch", "Groq", "Render", "Vercel", "MCP", "FastAPI"],
-    downloadUrl: "https://groww-review-advisory.vercel.app/",
-    downloadText: "View Live Product"
-  },
-  {
-    id: "AB002",
-    title: "AI Mutual Fund Advisor",
-    role: "Vibe Coding-P2",
-    description: "Built an AI-powered mutual fund Q&A chatbot using RAG architecture and Groww fund data to deliver reliable answers through automated retrieval and LLM-based responses.",
-    metric: "Centralized Source of Truth",
-    image: "/projects/GrowFundGyaan.webp",
-    fullDescription: "Conceptualized and built an end-to-end AI-powered mutual fund Q&A chatbot leveraging Retrieval-Augmented Generation (RAG) architecture to provide factual, context-grounded responses using ingested Groww mutual fund data. Designed and automated the complete data pipeline including web scraping, parsing, chunking, embedding generation, and vector database storage, enabling efficient semantic retrieval and low-latency answer generation through LLM integration. Architected the system to minimize hallucinations by restricting responses to retrieved factual context, creating a scalable and reliable investment information assistant.",
-    features: [
-      "Developed a RAG-based mutual fund Q&A chatbot delivering factual, context-grounded responses using Groww fund data.",
-      "Implemented automated data ingestion, parsing, chunking, embedding generation, and vector database retrieval pipelines.",
-      "Integrated LLM-based answer generation with semantic search to reduce hallucinations and improve response reliability.",
-      "Designed scalable system architecture with vector search, backend orchestration, and full-stack deployment pipelines."
-    ],
-    tools: ["Cursor", "ChromaDB", "Google Stitch", "Supabase", "Groq", "Render", "Vercel", "bge-small-en", "FastAPI"],
-    downloadUrl: "https://growwfundgenai.vercel.app/",
-    downloadText: "View Live Product"
-  },
-  {
-    id: "AB003",
-    title: "AI Restaurant Suggestor",
-    role: "Vibe Coding-P3",
-    description: "Built an AI-powered tool delivering personalized restaurant recommendations to reduce decision fatigue, currently focused on Bangalore for higher data accuracy.",
-    metric: "Rapid Product Execution",
-    image: "/projects/Zomato.RecAi.webp",
-    fullDescription: "Conceptualized and built an end-to-end AI-driven recommendation system leveraging LLM-based reasoning to deliver context-aware restaurant suggestions based on user preferences. Scoped to Bangalore as an MVP to ensure high-quality, curated data and more accurate outputs. Designed the system architecture, integrated AI models, and deployed a scalable full-stack application using AI-assisted development tools, enabling rapid iteration from idea to production.",
-    features: [
-      "Developed personalized restaurant recommendations using LLM-based reasoning for context-aware suggestions.",
-      "Implemented an AI-powered full-stack application using AI-assisted development tools.",
-      "Focused on Bangalore as MVP to ensure high-quality data and accurate outputs.",
-      "Designed system architecture with integrated database and backend/frontend deployment pipelines."
-    ],
-    tools: ["Cursor", "Google Antigravity", "Google Stitch", "Supabase", "Groq", "Render", "Vercel", "FastAPI"],
-    downloadUrl: "https://zomato-recai-frontend.vercel.app/",
-    downloadText: "View Live Product"
-  },
-  {
-    id: "AB004",
-    title: "Swish - Promise vs Reality",
-    role: "FoodTech Deep-Dive",
-    description: "Identified a gap in Swish’s 10-minute delivery promise by mapping issues across kitchen, dispatch, and support via detailed PM-first documentation.",
-    metric: "End-to-End Product Optimization",
-    image: "/projects/swish.webp",
-    fullDescription: "Swish’s 10-minute delivery promise, while compelling, showed inconsistency due to breakdowns in kitchen readiness, delivery assignment, and customer support. This project focused on identifying SLA failure points and solving for the gap between promise and execution for its core 20–35 urban user segment. By analyzing user feedback, operational constraints, and delivery lifecycle data, I mapped business goals—improving reliability, customer trust, and retention—to targeted product interventions across dispatch logic, dynamic SLA setting, and service recovery.",
-    features: [
-      "Identified SLA failure points in kitchen readiness, dispatch, and customer support.",
-      "Analyzed user feedback, operational constraints, and delivery lifecycle data to identify root causes.",
-      "Mapped business goals-improving reliability, customer trust, and retention.",
-      "Authored a comprehensive end-to-end documents and project execution plan."
-    ],
-    tools: ["Cursor", "Google Antigravity", "Google Stitch", "Product Thinking", "Problem Decomposition", "Prioritization", "RICE Framework", "Estimation"],
-    downloadUrl: "https://drive.google.com/drive/folders/1eF_GObhQnozQfDENCF5SmTSZhJpX3CSN?usp=sharing",
-    downloadText: "View Optimization Plan"
-  },
-  {
-    id: "AB005",
-    title: "Increasing Voice Usage_PRD",
-    role: "ChatGPT-Case Study",
-    description: "Led a product initiative to improve adoption of ChatGPT's conversational feature by addressing discoverability and onboarding gaps documented into a detailed PRD.",
-    metric: "Product Impact Unlocked",
-    image: "/projects/GPT Wireframes.webp",
-    fullDescription: "ChatGPT's conversational feature, despite strong technical capabilities, remained significantly underutilized due to poor discoverability and lack of guided onboarding. This project focused on identifying adoption funnel drop-offs and solving for awareness-to-usage gaps among high-value user segments such as working professionals. By analyzing user behavior, competitive benchmarks, and adoption metrics, I mapped business goals—improving feature adoption, engagement, and retention—to targeted product interventions.",
-    features: [
-      "Identified awareness-to-usage gaps in the voice feature adoption funnel.",
-      "Analyzed user behavior, competitive benchmarks, and adoption metrics to identify root causes.",
-      "Mapped business goals—improving feature adoption, engagement, and retention—to targeted product interventions.",
-      "Authored a comprehensive PRD with actionable recommendations for product and growth teams."
-    ],
-    tools: ["Whimsical", "ChatGPT", "Prioritization", "RICE Framework"],
-    downloadUrl: "/files/Increasing ChatGPT's Voice Tech Usage_PRD.pdf",
-    downloadText: "Download Full PRD"
-  },
-  {
-    id: "AB006",
-    title: "Reducing Customer Support Load",
-    role: "Swiggy-Case Study",
-    description: "Reduced customer support ticket dependency at Swiggy by identifying issue drivers and defining product levers for lower agent needs and cost savings.",
-    metric: "Efficiency-Driven Cost Savings",
-    image: "/projects/Swiggy Case Study_KPI Tree.webp",
-    fullDescription: "Swiggy's Customer Support Optimization initiative was conceived to address the rising volume of support tickets impacting customer experience and operational costs. By leveraging data-driven guesstimate and root cause analysis, I modeled support demand at scale and identified key drivers of customer complaints. This enabled me to map core business outcomes; reducing support tickets, minimizing agent dependency, and driving cost savings to targeted product outcomes such as lowering issue rates and improving average resolution time.",
-    features: [
-      "Identified that even a small % of order issues at scale drives massive support ticket volume.",
-      "Discovered that reducing issue rate has a significantly higher impact than optimizing support capacity.",
-      "Established average handling time as a critical lever influencing agent headcount requirements.",
-      "Quantified that targeted product interventions can reduce support dependency and unlock substantial cost savings."
-    ],
-    tools: ["Whimsical", "Guesstimate", "Product Sense", "Product Thinking"],
-    downloadUrl: "/files/Case Study_Swiggy.pdf",
-    downloadText: "Download Full Case Study"
-  },
-  {
-    id: "AB007",
-    title: "Scaling Platform Users",
-    role: "Peppo-Case Study",
-    description: "Led a growth-focused product strategy for Peppo by identifying high-value user segments through behavioral and demographic analysis.",
-    metric: "Growth Promoting Segmentation",
-    image: "/projects/Peppo User Segmentation.webp",
-    fullDescription: "Peppo's growth strategy was redefined to address declining retention and rising customer acquisition costs despite strong top-of-funnel performance. By leveraging behavioral, demographic, and acquisition data, I developed a structured segmentation model to identify high-value user cohorts and uncover key drivers of retention and churn. This enabled mapping critical business goals—improving retention, reducing CAC inefficiencies, and increasing LTV—to actionable product and growth levers such as personalization, pricing experimentation, and content expansion. My role involved defining segmentation axes, designing a mixed-method user research plan (quantitative and qualitative), and translating insights into a focused growth strategy. The approach emphasized prioritizing high-intent user segments, refining acquisition channels, and aligning product experience with user motivations to drive sustainable growth.",
-    features: [
-      "Identified high-intent user segments through behavioral and demographic analysis.",
-      "Designed a mixed-method research framework combining quantitative and qualitative methods.",
-      "Defined actionable product and growth levers to improve retention and reduce CAC.",
-      "Prioritized high-intent segments and refined acquisition channels to drive sustainable growth."
-    ],
-    tools: ["Data Cleaning", "User Segmentation", "Analytics", "Strategic Thinking"],
-    downloads: [
-      { url: "/files/Peppo_Problem Statement.docx", text: "Download Problem Statement" },
-      { url: "/files/Cracking Growth at Peppo_Working Document.xlsx", text: "Download Solution Document" }
-    ]
-  },
-];
+/** A screenshot in a minimal window frame, so very different images read as one set. */
+function Shot({ src, alt, fit = "cover", className }: { src: string; alt: string; fit?: "cover" | "contain"; className?: string }) {
+  return (
+    <span className={`flex flex-col overflow-hidden rounded-xl border border-white/10 bg-[#121214] shadow-[0_40px_80px_-24px_rgba(0,0,0,0.85)] ${className ?? ""}`}>
+      <span className="flex h-6 shrink-0 items-center gap-1.5 border-b border-white/5 px-3" aria-hidden="true">
+        <span className="h-1.5 w-1.5 rounded-full bg-white/20" />
+        <span className="h-1.5 w-1.5 rounded-full bg-white/20" />
+        <span className="h-1.5 w-1.5 rounded-full bg-white/20" />
+      </span>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        className={fit === "cover" ? "min-h-0 w-full flex-1 bg-white object-cover object-left-top" : "max-h-[64vh] w-full bg-white object-contain"}
+      />
+    </span>
+  );
+}
 
-export default function Projects() {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [selectedProject, setSelectedProject] = useState<typeof PROJECTS[0] | null>(null);
+/** Cover for internal work with no screenshot: the measured results, set large. */
+function StatCover({ highlights, large = false, className }: { highlights: NonNullable<ProjectType["highlights"]>; large?: boolean; className?: string }) {
+  return (
+    <span
+      className={`grid content-center gap-x-5 gap-y-5 rounded-xl border border-white/10 bg-[#141416] p-5 shadow-[0_40px_80px_-24px_rgba(0,0,0,0.85)] ${
+        highlights.length > 2 ? "grid-cols-3" : "grid-cols-2"
+      } ${className ?? ""}`}
+    >
+      {highlights.map((h) => (
+        <span key={h.label} className="block">
+          <span className={`block whitespace-nowrap font-medium leading-none tracking-[-0.05em] text-mist ${large ? "text-[clamp(2.25rem,5vw,4.25rem)]" : highlights.length > 2 ? "text-[clamp(1.25rem,1.6vw,1.8rem)]" : "text-[clamp(1.5rem,2.3vw,2.2rem)]"}`}>
+            {h.value}
+          </span>
+          <span className="mt-2 block text-[12px] leading-snug text-mist/55">{h.label}</span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function ProjectTile({ project, index, wide, onOpen }: { project: ProjectType; index: number; wide: boolean; onOpen: (el: HTMLButtonElement) => void }) {
+  return (
+    <motion.li
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-8% 0px" }}
+      transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: (index % 4) * 0.08 }}
+      className={wide ? "min-h-[420px] xl:min-h-[340px]" : "min-h-[440px]"}
+    >
+      <button
+        data-cursor="Open"
+        onClick={(e) => onOpen(e.currentTarget)}
+        aria-label={`Open ${KIND_LABEL[project.kind].toLowerCase()}: ${project.title}`}
+        className="group relative flex h-full w-full flex-col overflow-hidden rounded-[22px] border border-mist/10 bg-graphite-2 p-6 text-left max-sm:text-center transition-colors duration-500 hover:border-mist/25 sm:p-7"
+      >
+        <span aria-hidden="true" className={`absolute inset-0 opacity-60 transition-opacity duration-700 group-hover:opacity-100 ${GLOW[project.kind]}`} />
+
+        <span className={`relative z-10 flex flex-col ${wide ? "xl:max-w-[46%]" : ""}`}>
+          <span className="flex items-center justify-between gap-3 font-mono text-[10.5px] uppercase tracking-[0.18em] text-mist/45">
+            <span>{project.role}</span>
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-mist/15 text-mist transition-all duration-500 group-hover:rotate-45 group-hover:border-oak group-hover:bg-oak group-hover:text-ink">
+              <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+            </span>
+          </span>
+          <span className={`mt-4 font-medium leading-[1.02] tracking-[-0.035em] ${wide ? "text-[clamp(1.75rem,2.6vw,2.6rem)]" : "text-[clamp(1.35rem,1.6vw,1.6rem)]"}`}>
+            {project.title}
+          </span>
+          <span className="mt-3 text-[13.5px] leading-snug text-mist/60">{project.problem}</span>
+          <span className="mt-4 flex items-center gap-2.5 text-[13px] text-oak max-sm:justify-center">
+            <span className="h-px w-5 shrink-0 bg-oak/70" aria-hidden="true" />
+            {project.metric}
+          </span>
+        </span>
+
+        <span
+          aria-hidden="true"
+          className={`absolute transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-y-3 ${
+            !project.image
+              ? // Figures must stay fully visible, so the results card sits inside the tile instead of bleeding off it.
+                wide
+                ? "bottom-6 left-6 right-6 top-[62%] sm:left-7 sm:right-7 xl:bottom-7 xl:left-[52%] xl:top-[22%]"
+                : "bottom-6 left-6 right-6 top-[64%] sm:left-7 sm:right-7"
+              : wide
+                ? "bottom-[-10%] left-6 right-[-12%] top-[60%] -rotate-[1.5deg] group-hover:rotate-0 sm:left-7 xl:bottom-[-14%] xl:left-[52%] xl:right-[-6%] xl:top-[18%]"
+                : "bottom-[-10%] left-6 right-[-16%] top-[64%] -rotate-[1.5deg] group-hover:-translate-x-2 group-hover:rotate-0 sm:left-7"
+          }`}
+        >
+          {project.image ? (
+            <Shot src={project.image} alt="" className="h-full w-full" />
+          ) : (
+            project.highlights && <StatCover highlights={project.highlights} className="h-full w-full" />
+          )}
+        </span>
+      </button>
+    </motion.li>
+  );
+}
+
+function ProjectLink({ url, text }: { url: string; text: string }) {
+  const local = isLocalFile(url);
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      download={local || undefined}
+      className="group flex items-center justify-between gap-4 rounded-full bg-ink py-3 pl-6 pr-3 text-sm font-medium text-mist transition-colors duration-300 hover:bg-oak-deep"
+    >
+      {text}
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-mist/10 transition-transform duration-500 group-hover:rotate-45">
+        {local ? <Download className="h-4 w-4 transition-transform duration-500 group-hover:-rotate-45" aria-hidden="true" /> : <ArrowUpRight className="h-4 w-4" aria-hidden="true" />}
+      </span>
+    </a>
+  );
+}
+
+function CaseStudy({ index, onClose, onNavigate }: { index: number | null; onClose: () => void; onNavigate: (i: number) => void }) {
+  const project = index === null ? null : PROJECTS[index];
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const onKey = useEffectEvent((e: KeyboardEvent) => {
+    if (index === null) return;
+    if (e.key === "Escape") onClose();
+    if (e.key === "ArrowRight") onNavigate((index + 1) % PROJECTS.length);
+    if (e.key === "ArrowLeft") onNavigate((index - 1 + PROJECTS.length) % PROJECTS.length);
+  });
+  const isOpen = index !== null;
+  useEffect(() => {
+    if (!isOpen) return;
+    window.__lenis?.stop();
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+      window.__lenis?.start();
+    };
+  }, [isOpen]);
 
   useEffect(() => {
-    if (selectedProject) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [selectedProject]);
+    if (index === null) return;
+    scrollRef.current?.scrollTo({ top: 0 });
+    closeRef.current?.focus({ preventScroll: true });
+  }, [index]);
 
-  const scroll = (direction: "left" | "right") => {
-    if (scrollContainerRef.current) {
-      const scrollAmount = window.innerWidth > 768 ? 600 : 320;
-      const currentScroll = scrollContainerRef.current.scrollLeft;
-      scrollContainerRef.current.scrollTo({
-        left: direction === "left" ? currentScroll - scrollAmount : currentScroll + scrollAmount,
-        behavior: "smooth",
-      });
-    }
-  };
+  const next = index === null ? 0 : (index + 1) % PROJECTS.length;
+  const prev = index === null ? 0 : (index - 1 + PROJECTS.length) % PROJECTS.length;
+  const label = "font-mono text-[10.5px] uppercase tracking-[0.2em] text-ink/45";
 
   return (
-    <>
-      <section
-        id="work"
-        className="relative w-full bg-background py-32 overflow-hidden border-t border-foreground/5 z-20"
-      >
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
-
-          {/* Header Section */}
-          <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-16 gap-6 text-center md:text-left px-4 md:px-0">
-            <div>
-              <h2 className="text-4xl md:text-6xl font-bold tracking-tighter drop-shadow-md text-foreground">
-                Projects & Case Studies
-              </h2>
-              <p className="text-lg mt-4 font-light text-foreground/60 max-w-lg mx-auto md:mx-0">
-                Real problems. Real impact. Browse through a few pivotal projects & case studies that I have worked on.
-              </p>
-            </div>
-
-            {/* Nav Buttons */}
-            <div className="flex gap-4 pm-zone">
-              <button
-                onClick={() => scroll("left")}
-                className="p-3 rounded-full border border-foreground/20 hover:bg-foreground/5 text-foreground transition-all"
-                aria-label="Scroll Left"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => scroll("right")}
-                className="p-3 rounded-full border border-foreground/20 hover:bg-foreground/5 text-foreground transition-all"
-                aria-label="Scroll Right"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Scrollable Gallery */}
-          <div
-            ref={scrollContainerRef}
-            className="flex gap-8 overflow-x-auto no-scrollbar pb-12 pm-zone pt-8 scroll-smooth snap-x snap-mandatory"
-            role="region"
-            aria-label="Projects Gallery"
-          >
-            {PROJECTS.map((project, idx) => (
-              <article
-                key={idx}
-                onClick={() => setSelectedProject(project)}
-                className="group relative cursor-pointer pm-glass-hover w-[85vw] md:w-[450px] flex-shrink-0 bg-foreground/5 border border-foreground/10 rounded-3xl overflow-hidden hover:-translate-y-2 transition-transform duration-500 shadow-xl snap-center"
-                aria-label={`Project: ${project.title}`}
-              >
-                {/* Image Section */}
-                <div className="relative h-56 w-full overflow-hidden bg-foreground/10" role="img" aria-label={`Screenshot of ${project.title}`}>
-                  <div
-                    className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-                    style={{ backgroundImage: `url('${project.image}')` }}
-                  />
-                  {/* View Details Hint */}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <span className="text-white font-medium tracking-widest uppercase text-xs border border-white/30 rounded-full px-4 py-2 backdrop-blur-sm">View Case Study</span>
-                  </div>
-                </div>
-
-                {/* Content Section */}
-                <div className="p-8 flex flex-col justify-between h-[300px]">
-                  <div>
-                    <div className="mb-4 inline-block w-fit rounded-full bg-foreground/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-foreground/70">
-                      {project.role}
-                    </div>
-
-                    <h3 className="mb-3 text-2xl font-bold tracking-tight text-foreground">
-                      {project.title}
-                    </h3>
-
-                    <p className="text-sm font-light leading-relaxed text-foreground/70 line-clamp-4">
-                      {project.description}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-3 text-sm font-bold text-green-500 mt-6 pt-6 border-t border-foreground/10" aria-label={`Impact metric: ${project.metric}`}>
-                    <span className="h-[2px] w-6 bg-green-500 rounded-full" aria-hidden="true" />
-                    {project.metric}
-                  </div>
-                </div>
-              </article>
-            ))}
-            {/* Empty spacer for the end of the scroll */}
-            <div className="w-[10vw] flex-shrink-0" aria-hidden="true" />
-          </div>
-
-        </div>
-      </section>
-
-      {/* Modern Modal Overlay */}
-      <AnimatePresence>
-        {selectedProject && (
+    <AnimatePresence>
+      {project && (
+        <motion.div key="case-study" className="fixed inset-0 z-[120]" role="dialog" aria-modal="true" aria-labelledby="case-study-title" exit={{ opacity: 1 }}>
           <motion.div
+            className="absolute inset-0 bg-ink/75 backdrop-blur-sm"
+            onClick={onClose}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-12 md:px-12 bg-background/80 backdrop-blur-md"
-            onClick={() => setSelectedProject(null)}
+            transition={{ duration: 0.5 }}
+          />
+          <motion.div
+            ref={scrollRef}
+            data-lenis-prevent
+            className="no-scrollbar absolute inset-x-0 bottom-0 top-3 overflow-y-auto overscroll-contain rounded-t-[28px] bg-daylight text-ink sm:top-5 lg:inset-x-5"
+            initial={{ y: "100%" }}
+            animate={{ y: "0%" }}
+            exit={{ y: "100%" }}
+            transition={{ duration: 0.85, ease: [0.76, 0, 0.24, 1] }}
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="relative w-full max-w-5xl max-h-[90vh] md:max-h-[85vh] bg-background border border-foreground/10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] rounded-[2rem] overflow-hidden flex flex-col cursor-auto pointer-events-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="absolute top-4 right-4 md:top-6 md:right-6 z-20">
+            <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-ink/10 bg-daylight/85 px-5 py-3.5 backdrop-blur-md sm:px-8 lg:px-12">
+              <span className={label}>
+                {project.id} <span className="mx-1.5 text-ink/25">/</span> {KIND_LABEL[project.kind]}
+              </span>
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setSelectedProject(null)}
-                  className="p-3 bg-background/80 backdrop-blur-xl border border-foreground/10 rounded-full text-foreground/80 hover:text-foreground hover:bg-foreground/5 transition-colors active:scale-95 pm-glass-hover shadow-lg"
-                  aria-label="Close modal"
+                  onClick={() => onNavigate(prev)}
+                  className="hidden h-10 w-10 place-items-center rounded-full border border-ink/15 transition-colors hover:bg-ink hover:text-mist sm:grid"
+                  aria-label={`Previous: ${PROJECTS[prev].title}`}
                 >
-                  <X className="w-5 h-5" />
+                  <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                </button>
+                <button
+                  onClick={() => onNavigate(next)}
+                  className="hidden h-10 w-10 place-items-center rounded-full border border-ink/15 transition-colors hover:bg-ink hover:text-mist sm:grid"
+                  aria-label={`Next: ${PROJECTS[next].title}`}
+                >
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </button>
+                <button
+                  ref={closeRef}
+                  onClick={onClose}
+                  className="group ml-1 flex items-center gap-3 rounded-full bg-ink py-1.5 pl-4 pr-1.5 text-xs font-medium text-mist"
+                  aria-label="Close case study"
+                >
+                  <span className="hidden font-mono uppercase tracking-[0.18em] sm:inline">Close</span>
+                  <span className="grid h-7 w-7 place-items-center rounded-full bg-mist/10 transition-transform duration-500 group-hover:rotate-90">
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </span>
                 </button>
               </div>
+            </div>
 
-              {/* Scrollable Modal Content */}
-              <div className="flex-1 overflow-y-auto no-scrollbar pm-zone">
-                {/* Hero Header contained inside the scroll view */}
-                <div className="relative w-full h-64 md:h-[40vh] shrink-0 bg-foreground/5">
-                  <div
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: `url('${selectedProject.image}')` }}
-                  />
-                  {/* Vignette to ensure text readability */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+            <AnimatePresence mode="wait">
+              <motion.article
+                key={project.id}
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.12 } }}
+                exit={{ opacity: 0, y: -16, transition: { duration: 0.25 } }}
+                className="mx-auto max-w-[1280px] px-5 pb-16 pt-10 max-sm:text-center sm:px-8 lg:px-12 lg:pt-16"
+              >
+                <p className={label}>{project.context}</p>
+                <h2 id="case-study-title" className="mt-4 max-w-[18ch] text-[clamp(2.6rem,6vw,5.75rem)] font-medium leading-[0.95] tracking-[-0.045em]">
+                  {project.title}
+                </h2>
 
-                  <div className="absolute bottom-6 left-6 md:bottom-12 md:left-12 z-10 pr-6">
-                    <div className="mb-3 md:mb-4 inline-block rounded-full bg-foreground/10 backdrop-blur-md border border-foreground/10 px-4 py-1.5 text-[10px] md:text-xs font-bold uppercase tracking-widest text-foreground">
-                      {selectedProject.role}
+                {/* The brief: what a hiring manager asks first */}
+                <dl className="mt-10 grid border-t border-ink/15 md:grid-cols-[1.3fr_1fr_1fr]">
+                  {[
+                    ["The problem", project.problem],
+                    ["My role", project.myRole],
+                    ["Outcome", project.metric],
+                  ].map(([k, v], i) => (
+                    <div key={k} className={`border-b border-ink/15 py-5 md:py-6 md:pr-6 ${i > 0 ? "md:border-l md:pl-6" : ""}`}>
+                      <dt className={label}>{k}</dt>
+                      <dd className={`mt-2 leading-snug ${k === "Outcome" ? "text-lg font-medium text-oak-deep" : "text-[16px] text-ink/80"}`}>{v}</dd>
                     </div>
-                    <h3 className="text-4xl md:text-6xl font-bold tracking-tighter text-foreground drop-shadow-sm leading-tight">
-                      {selectedProject.title}
-                    </h3>
-                  </div>
-                </div>
+                  ))}
+                </dl>
 
-                {/* Modal Body Content */}
-                <div className="p-6 md:p-12">
-                  <div className="flex items-center gap-4 text-sm md:text-base font-bold text-green-500 mb-8 border border-green-500/20 bg-green-500/5 px-6 py-4 rounded-2xl w-fit">
-                    <span className="h-[2px] w-6 bg-green-500 rounded-full" />
-                    Impact: {selectedProject.metric}
-                  </div>
+                {/* Stage: the full screenshot, or the measured results for internal work */}
+                <motion.div
+                  className="relative mt-12 overflow-hidden rounded-[24px] bg-graphite px-5 py-8 sm:px-[6%] sm:py-14 lg:mt-16"
+                  initial={{ clipPath: "inset(6% 4% 6% 4% round 32px)" }}
+                  animate={{ clipPath: "inset(0% 0% 0% 0% round 24px)" }}
+                  transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
+                >
+                  <span aria-hidden="true" className={`absolute inset-0 ${GLOW[project.kind]}`} />
+                  {project.image ? (
+                    <Shot src={project.image} alt={`Screenshot of ${project.title}`} fit="contain" className="relative mx-auto w-fit max-w-full" />
+                  ) : (
+                    project.highlights && <StatCover highlights={project.highlights} large className="relative mx-auto max-w-4xl border-none bg-transparent shadow-none" />
+                  )}
+                </motion.div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-12 md:gap-20">
+                {/* Story */}
+                <div className="mt-16 grid gap-x-16 gap-y-12 lg:mt-24 lg:grid-cols-[13rem_1fr]">
+                  <h3 className={label}>Approach</h3>
+                  <p className="max-w-3xl text-xl leading-[1.6] text-ink/80 sm:text-[1.35rem]">{project.fullDescription}</p>
 
-                    {/* Left Column: Descriptions */}
-                    <div className="space-y-12">
-                      <section>
-                        <h4 className="text-xs font-bold uppercase tracking-widest text-foreground/40 mb-4">The Challenge & The Work</h4>
-                        <p className="text-base md:text-lg text-foreground/80 font-light leading-relaxed">
-                          {selectedProject.fullDescription}
-                        </p>
-                      </section>
+                  <h3 className={label}>{project.kind === "case" ? "Key findings" : "What shipped"}</h3>
+                  <ol className="grid gap-px overflow-hidden rounded-2xl border border-ink/10 bg-ink/10 sm:grid-cols-2">
+                    {project.features.map((feature, i) => (
+                      <li key={i} className="bg-daylight p-6">
+                        <span className="font-mono text-xs text-oak-deep">{String(i + 1).padStart(2, "0")}</span>
+                        <p className="mt-3 text-[15.5px] leading-relaxed text-ink/80">{feature}</p>
+                      </li>
+                    ))}
+                  </ol>
 
-                      <section>
-                        <h4 className="text-xs font-bold uppercase tracking-widest text-foreground/40 mb-6">Key Discoveries & Outcomes</h4>
-                        <ul className="space-y-4">
-                          {selectedProject.features.map((feature, i) => (
-                            <li key={i} className="flex flex-start gap-4 text-base text-foreground/80 font-light bg-foreground/5 p-4 rounded-2xl">
-                              <span className="w-1.5 h-1.5 mt-2 shrink-0 rounded-full bg-emerald-500" />
-                              <span className="leading-relaxed">{feature}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </section>
-                    </div>
+                  <h3 className={label}>{project.kind === "work" ? "Skills applied" : "Tools & methods"}</h3>
+                  <ul className="flex flex-wrap gap-2 max-sm:justify-center">
+                    {project.tools.map((tool) => (
+                      <li key={tool} className="rounded-full border border-ink/15 px-3.5 py-1.5 text-[13px] text-ink/75">
+                        {tool}
+                      </li>
+                    ))}
+                  </ul>
 
-                    {/* Right Column: Metadata */}
-                    <div>
-                      <div className="sticky top-6">
-                        <section className="mb-10 p-6 rounded-2xl border border-foreground/10 bg-foreground/5">
-                          <h4 className="text-xs font-bold uppercase tracking-widest text-foreground/40 mb-4">Tech & Tools</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {selectedProject.tools.map((tool, i) => (
-                              <span key={i} className="px-3 py-1.5 bg-background border border-foreground/10 rounded-lg text-xs font-medium text-foreground/80 shadow-sm">
-                                {tool}
-                              </span>
-                            ))}
-                          </div>
-                        </section>
-
-                        {/* Download Block(s) */}
-                        <div className="mt-6 flex flex-col gap-3">
-                          {selectedProject.downloadUrl && (
-                            <a
-                              href={selectedProject.downloadUrl}
-                              download
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="group flex items-center justify-between w-full p-4 bg-foreground text-background rounded-2xl text-sm font-bold hover:bg-emerald-500 hover:text-white transition-all duration-300 shadow-md pm-glass-hover"
-                            >
-                              {selectedProject.downloadText || "Download File"}
-                              <div className="bg-background/20 rounded-full p-2 group-hover:bg-white/20 transition-colors">
-                                <Download className="w-4 h-4 group-hover:-translate-y-1 transition-transform" />
-                              </div>
-                            </a>
-                          )}
-                          {selectedProject.downloads?.map((dl, i) => (
-                            <a
-                              key={i}
-                              href={dl.url}
-                              download
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="group flex items-center justify-between w-full p-4 bg-foreground text-background rounded-2xl text-sm font-bold hover:bg-emerald-500 hover:text-white transition-all duration-300 shadow-md pm-glass-hover"
-                            >
-                              {dl.text}
-                              <div className="bg-background/20 rounded-full p-2 group-hover:bg-white/20 transition-colors">
-                                <Download className="w-4 h-4 group-hover:-translate-y-1 transition-transform" />
-                              </div>
-                            </a>
-                          ))}
-                        </div>
+                  {(project.downloadUrl || project.downloads) && (
+                    <>
+                      <h3 className={label}>Explore</h3>
+                      <div className="flex flex-wrap gap-3 max-sm:justify-center">
+                        {project.downloadUrl && <ProjectLink url={project.downloadUrl} text={project.downloadText || "Download File"} />}
+                        {project.downloads?.map((dl) => <ProjectLink key={dl.url} url={dl.url} text={dl.text} />)}
                       </div>
-                    </div>
-
-                  </div>
+                    </>
+                  )}
                 </div>
-              </div>
-            </motion.div>
+
+                <button
+                  onClick={() => onNavigate(next)}
+                  className="group mt-20 grid w-full items-center gap-6 border-t border-ink/15 pt-8 text-left max-sm:text-center sm:grid-cols-[1fr_auto] lg:mt-28"
+                >
+                  <span>
+                    <span className={label}>Next · {KIND_LABEL[PROJECTS[next].kind]}</span>
+                    <span className="mt-3 block text-[clamp(1.9rem,4.2vw,3.75rem)] font-medium leading-none tracking-[-0.04em] transition-colors group-hover:text-oak-deep">
+                      {PROJECTS[next].title}
+                    </span>
+                  </span>
+                  {PROJECTS[next].image && (
+                    <span className="relative hidden h-28 w-44 overflow-hidden rounded-xl sm:block">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={PROJECTS[next].image} alt="" className="h-full w-full object-cover object-left-top transition-transform duration-700 group-hover:scale-105" />
+                    </span>
+                  )}
+                </button>
+              </motion.article>
+            </AnimatePresence>
           </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+const CaseStudyContext = createContext<(index: number, trigger?: HTMLElement | null) => void>(() => {});
+/** Opens the case-study sheet for PROJECTS[index]; focus returns to `trigger` on close. */
+export const useOpenCaseStudy = () => useContext(CaseStudyContext);
+
+export function CaseStudyProvider({ children }: { children: React.ReactNode }) {
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
+
+  const open = (index: number, trigger?: HTMLElement | null) => {
+    triggerRef.current = trigger ?? null;
+    setOpenIdx(index);
+  };
+  const close = () => {
+    setOpenIdx(null);
+    triggerRef.current?.focus({ preventScroll: true });
+  };
+
+  return (
+    <CaseStudyContext.Provider value={open}>
+      {children}
+      <CaseStudy index={openIdx} onClose={close} onNavigate={setOpenIdx} />
+    </CaseStudyContext.Provider>
+  );
+}
+
+/** Every project in one view, grouped so it's clear what shipped at work, what I built, and what is concept work. */
+export default function ProjectGrid() {
+  const open = useOpenCaseStudy();
+  return (
+    <div className="space-y-14">
+      {GROUPS.map((g) => {
+        const items = PROJECTS.map((p, i) => ({ p, i })).filter(({ p }) => p.kind === g.kind);
+        return (
+          <section key={g.kind} aria-label={g.title}>
+            <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 max-sm:flex-col max-sm:items-center max-sm:text-center border-b border-mist/10 pb-4">
+              <h3 className="flex items-center gap-3 text-xl font-medium tracking-[-0.02em]">
+                <span className={`h-2 w-2 rounded-full ${g.dot}`} aria-hidden="true" />
+                {g.title}
+                <span className="font-mono text-[11px] text-mist/35">{String(items.length).padStart(2, "0")}</span>
+              </h3>
+              <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-mist/40">{g.note}</p>
+            </div>
+            <ul className={`mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 ${g.kind === "work" ? "" : "lg:grid-cols-4"}`}>
+              {items.map(({ p, i }, k) => (
+                <ProjectTile key={p.id} project={p} index={k} wide={g.kind === "work"} onOpen={(el) => open(i, el)} />
+              ))}
+            </ul>
+          </section>
+        );
+      })}
+    </div>
   );
 }

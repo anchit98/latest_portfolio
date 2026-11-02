@@ -1,119 +1,187 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ArrowUpRight, Menu, X } from "lucide-react";
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { ArrowUpRight, Github, Instagram, Linkedin } from "lucide-react";
+import { motion, AnimatePresence, useMotionValueEvent, useScroll } from "framer-motion";
+import Magnetic from "./Magnetic";
+import Logo from "./Logo";
+
+const RESUME_URL = "https://drive.google.com/file/d/1bNt2ZAid8TBx8o7Vl5tIOGQKbAUJG1B6/view?usp=sharing";
+const NAV = [
+  { id: "story", label: "Story" },
+  { id: "work", label: "Work" },
+  { id: "toolkit", label: "Toolkit" },
+  { id: "contact", label: "Contact" },
+];
+const SOCIALS = [
+  { label: "LinkedIn", href: "https://linkedin.com/in/anchitboruah/", Icon: Linkedin },
+  { label: "GitHub", href: "https://github.com/anchit98/", Icon: Github },
+  { label: "Instagram", href: "https://instagram.com/anchitboruah/", Icon: Instagram },
+];
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-
+  const [hidden, setHidden] = useState(false);
+  const [active, setActive] = useState<string | null>(null);
   const { scrollY } = useScroll();
 
-  // Transition the header from a gradient hero state to a solid black state as we leave the 500vh hero section.
-  const solidBgOpacity = useTransform(scrollY, [4800, 5000], [0, 1]);
-
-  const handleScrollTo = (id: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsMenuOpen(false);
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+  // Tuck away while scrolling down, come back when scrolling up or near the top.
+  // Direction is measured against the last position that moved past a small dead zone, so smooth-scroll jitter can't flip it.
+  const lastY = useRef(0);
+  useMotionValueEvent(scrollY, "change", (y) => {
+    if (y < 120) {
+      setHidden(false);
+      lastY.current = y;
+      return;
     }
-  };
+    const delta = y - lastY.current;
+    if (Math.abs(delta) < 6) return;
+    setHidden(delta > 0);
+    lastY.current = y;
+  });
 
+  // Active section indicator.
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) setActive(e.target.id);
+          else if (e.target.id === active) setActive(null);
+        }
+      },
+      { rootMargin: "-50% 0px -50% 0px" }
+    );
+    for (const { id } of NAV) {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    }
+    return () => observer.disconnect();
+  }, [active]);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    window.__lenis?.stop();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setIsMenuOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.__lenis?.start();
+    };
+  }, [isMenuOpen]);
 
   return (
-    <motion.header
-      className="fixed top-0 inset-x-0 z-50 px-6 py-6 md:px-12 flex items-center justify-between text-foreground backdrop-blur-[2px] transition-all duration-500"
-    >
-      {/* Dynamic Background Layers */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black via-black/80 to-transparent -z-10" />
-      <motion.div
-        style={{ opacity: solidBgOpacity }}
-        className="absolute inset-0 bg-black -z-10 shadow-2xl"
-      />
-
-
-
-
-      {/* Initials */}
-      <div
-        className="text-3xl font-bold tracking-tighter cursor-pointer pm-glass-hover z-50"
-        onClick={() => {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          setIsMenuOpen(false);
-        }}
+    <>
+      <motion.header
+        className="fixed inset-x-0 top-0 z-[90] flex items-center justify-between px-5 py-5 text-white mix-blend-difference sm:px-8 lg:px-12 lg:py-7 xl:px-16"
+        animate={{ y: hidden && !isMenuOpen ? "-110%" : "0%" }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       >
-        AB
-      </div>
-
-      {/* Center Email (Hidden on Mobile) */}
-      <div className="hidden lg:block absolute left-1/2 -translate-x-1/2 text-sm text-neutral-400 hover:text-white transition-colors">
-        <a href="mailto:jobsforanchit.boruah@gmail.com">jobsforanchit.boruah@gmail.com</a>
-      </div>
-
-      {/* Desktop Navigation & Actions */}
-      <div className="flex items-center gap-6 md:gap-10">
-        <nav className="hidden md:flex items-center gap-8 text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
-          <a href="#career" onClick={(e) => handleScrollTo('career', e)} className="hover:text-foreground hover:glow-text transition-all">Career</a>
-          <a href="#work" onClick={(e) => handleScrollTo('work', e)} className="hover:text-foreground hover:glow-text transition-all">Work</a>
-          <a href="#contact" onClick={(e) => handleScrollTo('contact', e)} className="hover:text-foreground hover:glow-text transition-all">Contact</a>
-        </nav>
-
-        <a
-          href="https://drive.google.com/file/d/1bNt2ZAid8TBx8o7Vl5tIOGQKbAUJG1B6/view?usp=sharing"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hidden sm:flex group relative items-center gap-2 px-5 py-2.5 border border-white/30 rounded-full text-sm font-medium hover:bg-white hover:text-black hover:shadow-[0_0_20px_rgba(255,255,255,0.4)] transition-all duration-300 backdrop-blur-md"
-          aria-label="View Resume (opens in new tab)"
-        >
-          Resume
-          <ArrowUpRight className="w-4 h-4 group-hover:rotate-45 transition-transform duration-300" />
+        <a href="#top" aria-label="Back to top" className="group flex items-center gap-3">
+          <Logo className="h-8 w-8" />
+          <span className="relative hidden overflow-hidden font-mono text-[10.5px] uppercase tracking-[0.2em] opacity-60 sm:block">
+            <span className="block transition-transform duration-500 group-hover:-translate-y-full">Portfolio ©2026</span>
+            <span className="absolute block transition-transform duration-500 group-hover:-translate-y-full">Back to top</span>
+          </span>
         </a>
 
+        <div className="flex items-center gap-3 md:gap-10">
+          <nav aria-label="Primary" className="hidden items-center gap-8 md:flex">
+            {NAV.map((item) => (
+              <a key={item.id} href={`#${item.id}`} className="group relative py-1 font-mono text-[11px] uppercase tracking-[0.22em]">
+                <span className="relative block overflow-hidden">
+                  <span className="block transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-y-full">{item.label}</span>
+                  <span className="absolute inset-0 block translate-y-full transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-0">{item.label}</span>
+                </span>
+                {active === item.id && (
+                  <motion.span layoutId="nav-dot" className="absolute -bottom-2 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-white" transition={{ type: "spring", stiffness: 400, damping: 32 }} />
+                )}
+              </a>
+            ))}
+          </nav>
 
+          <Magnetic className="hidden sm:inline-block">
+            <a
+              href={RESUME_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex items-center gap-2 rounded-full border border-white/40 px-5 py-2.5 text-sm font-medium transition-colors duration-300 hover:bg-white hover:text-black"
+              aria-label="View Resume (opens in new tab)"
+            >
+              Resume
+              <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:rotate-45" aria-hidden="true" />
+            </a>
+          </Magnetic>
 
-        {/* Hamburger Menu Button */}
-        <button
-          className="md:hidden p-2.5 rounded-full border border-white/30 z-50 transition-all active:scale-95"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-        >
-          {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
-      </div>
+          <button
+            className="relative grid h-11 w-11 place-items-center rounded-full border border-white/40 md:hidden"
+            onClick={() => setIsMenuOpen((o) => !o)}
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-menu"
+            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+          >
+            <span className={`absolute h-px w-4 bg-white transition-transform duration-500 ${isMenuOpen ? "rotate-45" : "-translate-y-[3px]"}`} />
+            <span className={`absolute h-px w-4 bg-white transition-transform duration-500 ${isMenuOpen ? "-rotate-45" : "translate-y-[3px]"}`} />
+          </button>
+        </div>
+      </motion.header>
 
-      {/* Mobile Menu Dropdown */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -10 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="absolute top-20 right-6 w-48 bg-black/90 backdrop-blur-md z-40 flex flex-col rounded-2xl border border-white/10 shadow-2xl overflow-hidden py-2"
+            id="mobile-menu"
+            className="fixed inset-0 z-[85] flex flex-col justify-between bg-graphite px-5 pb-10 pt-28 text-mist sm:px-8"
+            initial={{ clipPath: "circle(0% at calc(100% - 42px) 42px)" }}
+            animate={{ clipPath: "circle(150% at calc(100% - 42px) 42px)" }}
+            exit={{ clipPath: "circle(0% at calc(100% - 42px) 42px)" }}
+            transition={{ duration: 0.7, ease: [0.76, 0, 0.24, 1] }}
           >
-            <nav className="flex flex-col text-sm font-semibold uppercase tracking-[0.1em]">
-              <a href="#career" onClick={(e) => handleScrollTo('career', e)} className="py-3 px-6 hover:bg-white/10 transition-colors text-neutral-400 hover:text-white">Career</a>
-              <a href="#work" onClick={(e) => handleScrollTo('work', e)} className="py-3 px-6 hover:bg-white/10 transition-colors text-neutral-400 hover:text-white">Work</a>
-              <a href="#contact" onClick={(e) => handleScrollTo('contact', e)} className="py-3 px-6 hover:bg-white/10 transition-colors text-neutral-400 hover:text-white">Contact</a>
+            <nav aria-label="Mobile" className="flex flex-col">
+              {NAV.map((item, i) => (
+                <div key={item.id} className="overflow-hidden border-b border-mist/10">
+                  <motion.a
+                    href={`#${item.id}`}
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-baseline justify-between py-4 text-5xl font-medium tracking-[-0.045em] max-sm:justify-center max-sm:gap-3"
+                    initial={{ y: "100%" }}
+                    animate={{ y: "0%" }}
+                    transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.2 + i * 0.06 }}
+                  >
+                    {item.label}
+                    <span className="font-mono text-xs tracking-normal text-mist/40">0{i + 1}</span>
+                  </motion.a>
+                </div>
+              ))}
             </nav>
-
-            <div className="px-4 py-3 border-t border-white/5 mt-1">
-              <a
-                href="https://drive.google.com/file/d/1bNt2ZAid8TBx8o7Vl5tIOGQKbAUJG1B6/view?usp=sharing"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex items-center justify-between w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-medium hover:bg-white hover:text-black transition-all duration-300"
-                aria-label="View Resume (opens in new tab)"
-              >
-                Resume
-                <ArrowUpRight className="w-3 h-3 group-hover:rotate-45 transition-transform duration-300" />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="space-y-6 max-sm:text-center">
+              <a href={RESUME_URL} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between rounded-full bg-mist px-6 py-4 text-sm font-medium text-ink">
+                View Resume <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
               </a>
-            </div>
+              <div className="space-y-1 text-sm text-mist/70">
+                <a href="mailto:jobsforanchit.boruah@gmail.com" className="block">
+                  jobsforanchit.boruah@gmail.com
+                </a>
+                <a href="tel:+919910980793" className="block">
+                  +91 99109 80793
+                </a>
+              </div>
+              <div className="flex gap-3 text-mist/70 max-sm:justify-center">
+                {SOCIALS.map((s) => (
+                  <a
+                    key={s.label}
+                    href={s.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={s.label}
+                    className="grid h-11 w-11 place-items-center rounded-full border border-mist/20 transition-colors hover:bg-mist hover:text-ink"
+                  >
+                    <s.Icon className="h-[18px] w-[18px]" aria-hidden="true" />
+                  </a>
+                ))}
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.header>
+    </>
   );
 }

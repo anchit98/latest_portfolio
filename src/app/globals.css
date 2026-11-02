@@ -1,27 +1,215 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* Palette sampled from the hero portrait: daylight wall/window, graphite blazer, oak desks + lamp. */
+:root,
 .dark {
-  --background: #000000;
-  --foreground: #ffffff;
+  --background: #1c1c1f;
+  --foreground: #ece9e4;
 }
 
-@theme {
-  --font-sans: var(--font-inter);
+@theme inline {
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-serif: var(--font-instrument), ui-serif, Georgia, serif;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 }
 
+@theme {
+  --color-daylight: #e7ebee;
+  --color-daylight-2: #d5dce3;
+  --color-window: #c1d4e6;
+  --color-ink: #19181b;
+  --color-graphite: #1c1c1f;
+  --color-graphite-2: #252529;
+  --color-graphite-3: #33333a;
+  --color-mist: #ece9e4;
+  --color-oak: #e3b283;
+  --color-oak-deep: #8a5a30;
+  --color-steel: #a9bdd0;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+/* Both ends of the page are daylight, so overscroll bounce matches; middle sections paint their own graphite. */
 html {
-  overflow-x: hidden;
+  position: relative; /* framer-motion measures scroll targets against this */
+  overflow-x: clip;
+  background: var(--color-daylight);
 }
 
 body {
-  background-color: var(--color-background);
-  color: var(--color-foreground);
-  font-family: var(--font-sans), sans-serif;
+  background-color: var(--color-daylight);
+  color: var(--color-mist);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--color-oak);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-oak);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Film grain for the graphite surfaces, so flat dark areas read as material rather than void. */
+.grain {
+  position: relative;
+  isolation: isolate;
+}
+.grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.marquee-track {
+  animation: marquee 38s linear infinite;
+}
+@keyframes marquee {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+/* Daylight drifting across the window side of the portrait. */
+.light-sweep {
+  background: linear-gradient(105deg, transparent 30%, rgba(255, 244, 226, 0.55) 48%, rgba(255, 244, 226, 0) 62%);
+  background-size: 260% 100%;
+  animation: sweep 11s var(--ease-in-out-quart) infinite;
+}
+@keyframes sweep {
+  0%,
+  35% {
+    background-position: 120% 0;
+  }
+  75%,
+  100% {
+    background-position: -40% 0;
+  }
+}
+
+/* Infographics: a depth wave across the initiatives plane, and money flowing along an arc. */
+.dot-wave {
+  animation: dotwave 4.2s ease-in-out infinite;
+}
+@keyframes dotwave {
+  0%,
+  100% {
+    translate: 0 0 0;
+  }
+  50% {
+    translate: 0 0 18px;
+    background-color: #f7dcbd;
+  }
+}
+/* Stand-in for a name kept private: a bar with a slow shimmer. */
+.redacted {
+  display: inline-block;
+  background: linear-gradient(100deg, rgba(236, 233, 228, 0.16) 30%, rgba(236, 233, 228, 0.34) 50%, rgba(236, 233, 228, 0.16) 70%);
+  background-size: 250% 100%;
+  animation: redacted 3.2s ease-in-out infinite;
+}
+@keyframes redacted {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+.hero-ring {
+  animation: heroring 90s linear infinite;
+}
+@keyframes heroring {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.flow-dash {
+  animation: flowdash 1.6s linear infinite;
+}
+@keyframes flowdash {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.scroll-cue::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  transform-origin: top;
+  animation: cue 2.4s var(--ease-in-out-quart) infinite;
+}
+@keyframes cue {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  45% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+  55% {
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .marquee-track,
+  .light-sweep,
+  .hero-ring,
+  .redacted {
+    animation: none;
+  }
 }

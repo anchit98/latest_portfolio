@@ -1,122 +1,78 @@
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { buildKnowledge } from "@/lib/knowledge";
+import { createAnswerer, type Answer } from "@/lib/rag";
 
-const SYSTEM_PROMPT = `
-You are the "Personal Assistant" of Anchit Boruah, a sharp and professional secretary who is very proud of Anchit's achievements and supports his aspirations and efforts to become a top-notch Product Manager. 
-You are acting as a witty, enthusiastic, and highly knowledgeable guide through his career saga.
+// Retrieval always runs here. If GOOGLE_GENERATIVE_AI_API_KEY is set, Gemini rewrites the retrieved passages into a
+// conversational answer; the rewrite is rejected if it introduces any number the passages don't contain.
 
-### YOUR PERSONA:
-- **Tone**: Sharp, professional, yet witty and engaging. You sounds like someone who understands business value, discovery, strategy, stakeholder management, and execution.
-- **Goal**: Convince recruiters and visitors that Anchit is an exceptional PM/Analyst who bridges the gap between discovery and delivery. But do not overdo it. Keep it professional.
-- **Communication Style**: Concise but high-impact. Use PM terminology (roadmap, stakeholder, MVP, POC, lifecycle, scaling, etc.) naturally.
+const SYSTEM = `You answer questions about Anchit Boruah, a Product Manager, for visitors to Anchit's portfolio.
+Use ONLY the passages provided. If they don't answer the question, say you don't have that information.
+Never invent employers, dates, metrics, users or skills. Never describe Anchit as a software engineer.
+Refer to Anchit by name, never with gendered pronouns. Keep the answer under 90 words, plain text, no markdown headings.
+Do not use em dashes or en dashes. Keep figures exactly as written, including "~", "+" and "INR".`;
 
-### ANCHIT'S CORE KNOWLEDGE BASE:
-Current Role: Sr. Business Analyst at WPP Media (Apr '24 - Present). 
-- Highlights: Scaled automation for 200+ requests, 50% faster handoffs, 30% utilization gains.
+const MAX_LEN = 400;
+const WINDOW_MS = 60_000;
+const LIMIT = 20;
+const hits = new Map<string, number[]>();
 
-Previous Experience:
-1. Manek Consultancy (Feb '24 - Apr '24): Business Analyst. Improved intake acceptance rates by 80%.
-2. Annalect India (Apr '22 - Feb '24): Business Analyst. Drove $5.8M in automation savings and reclaimed 176K+ work hours.
-3. Servetel Communications (Jan '20 - Apr '22): Sales Analyst. Reduced process time by 85% via 20+ automated systems.
+function rateLimited(ip: string) {
+  const now = Date.now();
+  const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
+  recent.push(now);
+  hits.set(ip, recent);
+  return recent.length > LIMIT;
+}
 
-Key Projects:
-- Project Alpha: Lead PM for a 0-1 AI analytics platform (+45% retention).
-- Beta Redesign: Senior PM for dashboard overhaul (-20% churn).
-- Gamma Integration: Managed $2M ARR payment migration.
-- Delta Mobile App: Launched flagship apps with 4.8★ rating.
+const numbers = (s: string) => s.match(/\d[\d,.]*/g)?.map((n) => n.replace(/,/g, "").replace(/\.$/, "")) ?? [];
 
-### RULES FOR RESPONDING:
-1. Speak directly to the user as if you are Anchit's digital personal assistant.
-2. If asked about something NOT in your knowledge base, say you're not sure but mention that "I'm always learning and expanding my scope—classic Agile mindset!"
-3. NEVER mention you are an AI directly unless explicitly asked "Are you a bot?". Even then, maintain the persona: "I'm Anchit's personal assistant available 24/7 on his behalf."
-4. Be enthusiastic about his achievements but keep it data-driven (mention the numbers!).
-5. Keep responses under 3-4 sentences whenever possible to maintain a chat-like feel.
-6. Share links to his projects if it helps to support answers to any question.
-`;
-
-const MODELS = [
-  "gemini-2.0-flash",
-  "gemini-1.5-flash",
-  "gemini-1.5-flash-8b",
-];
+async function rewrite(question: string, answer: Answer): Promise<string | null> {
+  const key = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  if (!key || !answer.grounded) return null;
+  const passages = answer.contexts.map((c, i) => `[${i + 1}] ${c.title} (${c.source})\n${c.text}`).join("\n\n");
+  try {
+    const model = new GoogleGenerativeAI(key).getGenerativeModel({
+      model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+      systemInstruction: SYSTEM,
+      generationConfig: { temperature: 0.2, maxOutputTokens: 400 },
+    });
+    const result = await Promise.race([
+      model.generateContent(`Passages:\n${passages}\n\nQuestion: ${question}`),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000)),
+    ]);
+    const text = result.response.text().trim().replace(/\s*[—–]\s*/g, ", ");
+    if (!text) return null;
+    const allowed = new Set(numbers(passages));
+    return numbers(text).every((n) => allowed.has(n)) ? text : null;
+  } catch (err) {
+    console.warn("[chat] rewrite skipped:", err instanceof Error ? err.message : err);
+    return null;
+  }
+}
 
 export async function POST(req: Request) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
+  if (rateLimited(ip)) {
+    return NextResponse.json({ error: "Too many questions in a minute. Please try again shortly." }, { status: 429 });
+  }
+
+  let message = "";
   try {
     const body = await req.json();
-    const userMessage = String(body.message || "Hi");
-    const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    message = String(body?.message ?? "").slice(0, MAX_LEN).trim();
+  } catch {}
+  if (!message) return NextResponse.json({ error: "Ask a question." }, { status: 400 });
 
-    if (!apiKey) {
-      console.error("GOOGLE_GENERATIVE_AI_API_KEY is not set.");
-      return NextResponse.json(
-        { reply: "Assistant configuration missing. Please set the API key." },
-        { status: 500 }
-      );
-    }
+  // Built per request so calculated figures (years of experience) stay current.
+  const answer = createAnswerer(buildKnowledge())(message);
+  const llm = await rewrite(message, answer);
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    let lastError = null;
-
-    // Try models in sequence as fallbacks
-    for (const modelName of MODELS) {
-      try {
-        console.log(`[API/Chat] Attempting request with model: ${modelName}`);
-        
-        const model = genAI.getGenerativeModel({ 
-          model: modelName,
-          generationConfig: {
-            maxOutputTokens: 500,
-            temperature: 0.7,
-          }
-        });
-
-        const chat = model.startChat({
-          history: [],
-          generationConfig: {
-            maxOutputTokens: 500,
-          },
-        });
-
-        // Combine prompt with user message
-        const prompt = `${SYSTEM_PROMPT}\n\nUSER INPUT: ${userMessage}`;
-
-        const result = await chat.sendMessage(prompt);
-        const response = await result.response;
-        const text = response.text();
-
-        if (text) {
-          console.log(`[API/Chat] Success with model: ${modelName}`);
-          return NextResponse.json({ reply: text, modelUsed: modelName });
-        }
-      } catch (err: any) {
-        console.warn(`[API/Chat] Model ${modelName} failed:`, err.message || err);
-        lastError = err;
-        // Continue to next model
-      }
-    }
-
-    // If all models failed
-    console.error("[API/Chat] All Gemini models failed:", lastError);
-    
-    // Check if it's a specific type of error
-    const errorMessage = lastError?.message || "Internal Server Error";
-    if (errorMessage.includes("429")) {
-      return NextResponse.json(
-        { reply: "I'm receiving too many requests right now. Please try again in a moment!" },
-        { status: 429 }
-      );
-    }
-
-    return NextResponse.json(
-      { reply: "I'm having a bit of trouble connecting to my brain right now. Can you try again in a moment?" },
-      { status: 500 }
-    );
-
-  } catch (error: any) {
-    console.error("Chat Server Error:", error);
-    return NextResponse.json(
-      { reply: "Something went wrong on the server. Please try again later." },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json({
+    text: llm ?? answer.text,
+    mode: llm ? "llm" : "retrieval",
+    sources: answer.sources,
+    links: answer.links,
+    suggestions: answer.suggestions,
+  });
 }
