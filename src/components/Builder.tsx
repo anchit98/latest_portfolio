@@ -78,7 +78,7 @@ export default function Builder() {
           <div className="flex flex-1 flex-col justify-between gap-10">
             <div>
               <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-oak">Live today</p>
-              <ul className="mt-4 max-sm:list-inside max-sm:pl-0 list-disc space-y-2.5 pl-5 text-[14.5px] text-mist/80 marker:text-oak">
+              <ul className="mt-4 max-sm:mx-auto max-sm:w-fit max-sm:text-left list-disc space-y-2.5 pl-5 text-[14.5px] text-mist/80 marker:text-oak">
                 <li>Sign-up, login and payments</li>
                 <li>Emails ready to send from any mail client</li>
                 <li>Concurrent pipeline processing</li>
@@ -87,7 +87,7 @@ export default function Builder() {
             </div>
             <div className="border-t border-mist/10 pt-8">
               <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-mist/40">Planned, not live yet</p>
-              <ul className="mt-4 max-sm:list-inside max-sm:pl-0 list-disc space-y-2.5 pl-5 text-[14.5px] text-mist/50 marker:text-mist/30">
+              <ul className="mt-4 max-sm:mx-auto max-sm:w-fit max-sm:text-left list-disc space-y-2.5 pl-5 text-[14.5px] text-mist/50 marker:text-mist/30">
                 <li>Autonomous application submission</li>
                 <li>End-to-end AI job-search agent</li>
                 <li>Application tracking &amp; analytics</li>
@@ -108,7 +108,7 @@ export default function Builder() {
             <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
           </span>
         </button>
-        <a href="#work" className="font-mono text-[11px] uppercase tracking-[0.18em] text-mist/50 hover:text-mist">
+        <a href="#work" className="font-mono text-[11px] uppercase tracking-[0.18em] text-mist/50 hover:text-mist max-sm:text-center">
           Three more live builds in Proof of work ↓
         </a>
       </div>

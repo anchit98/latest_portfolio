@@ -2,7 +2,7 @@
 
 import { ArrowUpRight, ArrowUp, Check, Copy, Github, Instagram, Linkedin, Phone, Send } from "lucide-react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
-import { usePrefersReducedMotion } from "@/hooks/useMediaQuery";
+import { useMediaQuery, usePrefersReducedMotion } from "@/hooks/useMediaQuery";
 import { FormEvent, useRef, useState } from "react";
 import RevealText from "./RevealText";
 import { StoryMap } from "./story/Chapter";
@@ -27,6 +27,8 @@ export default function Contact() {
   const [error, setError] = useState(false);
   const [copied, setCopied] = useState(false);
   const reduce = usePrefersReducedMotion();
+  // Clip-path repaints the whole panel every scroll frame, so the window-opening effect is desktop only.
+  const desktop = useMediaQuery("(min-width: 1024px)");
 
   // The section opens like a window: the daylight panel widens from an inset frame to full bleed.
   const ref = useRef<HTMLElement>(null);
@@ -73,7 +75,7 @@ export default function Contact() {
 
   return (
     <section ref={ref} id="contact" data-chapter="10" data-chapter-title="Next chapter" className="relative z-20 bg-[linear-gradient(to_bottom,var(--color-graphite)_50%,var(--color-daylight)_50%)]">
-      <motion.div style={reduce ? undefined : { clipPath }} className="bg-daylight text-ink">
+      <motion.div style={reduce || !desktop ? undefined : { clipPath }} className="bg-daylight text-ink">
         <div className="mx-auto max-w-[1440px] px-5 pb-10 pt-28 max-sm:text-center sm:px-8 lg:px-12 lg:pt-40 xl:px-20">
           <p className="flex flex-wrap items-center gap-x-4 font-mono text-[11px] uppercase tracking-[0.2em] text-ink/50 max-sm:justify-center">
             <span className="text-oak-deep">Chapter 10</span>

@@ -37,7 +37,9 @@ export default function SmoothScroll() {
     };
     document.addEventListener("click", onClick);
 
-    if (reduce) return () => document.removeEventListener("click", onClick);
+    // Touch devices already scroll natively and smoothly; a JS scroll loop there only costs frames.
+    const touch = window.matchMedia("(pointer: coarse)").matches;
+    if (reduce || touch) return () => document.removeEventListener("click", onClick);
 
     const lenis = new Lenis({ lerp: 0.1, wheelMultiplier: 0.9 });
     window.__lenis = lenis;

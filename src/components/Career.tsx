@@ -154,7 +154,7 @@ export default function Career() {
               { label: "With LLM-generated BRDs & SOWs", value: 30, display: "~0.3×", accent: true },
             ]}
           />
-          <ul className="mt-6 max-sm:list-inside max-sm:pl-0 list-disc space-y-1 pl-5 text-[13px] text-mist/65 marker:text-oak">
+          <ul className="mt-6 max-sm:mx-auto max-sm:w-fit max-sm:text-left list-disc space-y-1 pl-5 text-[13px] text-mist/65 marker:text-oak">
             <li>LLM-written BRDs and SOWs</li>
             <li>Auto-scheduled discovery calls</li>
             <li>Automated status updates</li>

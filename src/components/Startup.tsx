@@ -55,7 +55,7 @@ export function StartupTeaser({ tone = "light" }: { tone?: "light" | "dark" }) {
     <a
       href="#startup"
       className={`group relative flex items-center gap-4 rounded-2xl border p-3 pr-5 text-left shadow-[0_24px_50px_-28px_rgba(25,24,27,0.55)] transition-colors [transform-style:preserve-3d] ${
-        dark ? "border-oak/30 bg-[#141315] text-mist" : "border-ink/10 bg-daylight/80 text-ink backdrop-blur-sm hover:border-oak-deep/40"
+        dark ? "border-oak/30 bg-[#141315] text-mist" : "border-ink/10 bg-daylight text-ink hover:border-oak-deep/40"
       }`}
     >
       <span className={`grid h-[72px] w-[108px] shrink-0 place-items-center rounded-xl [transform:translateZ(24px)] ${dark ? "bg-graphite text-mist" : "bg-ink text-mist"}`}>

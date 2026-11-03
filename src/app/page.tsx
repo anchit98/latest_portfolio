@@ -1,5 +1,5 @@
 import Header from "@/components/Header";
-import Hero, { MobileProof } from "@/components/Hero";
+import Hero from "@/components/Hero";
 import Career from "@/components/Career";
 import Startup from "@/components/Startup";
 import Builder from "@/components/Builder";
@@ -16,7 +16,6 @@ export default function Home() {
     <main className="relative w-full">
       <Header />
       <Hero />
-      <MobileProof />
       <CaseStudyProvider>
         <Career />
         <Startup />

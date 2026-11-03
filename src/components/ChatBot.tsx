@@ -23,6 +23,18 @@ const GREETING: Message = {
 /** Portfolio assistant: questions go to /api/chat, which retrieves from Anchit's profile and answers only from it. */
 export default function ChatBot() {
   const [open, setOpen] = useState(false);
+  // Phones: the launcher waits until the reader is past the cover, so it never sits on the hero copy.
+  const [pastCover, setPastCover] = useState(false);
+  useEffect(() => {
+    if (window.matchMedia("(min-width: 1024px)").matches) {
+      setPastCover(true);
+      return;
+    }
+    const onScroll = () => setPastCover(window.scrollY > (document.getElementById("top")?.offsetHeight ?? 800) - window.innerHeight * 0.5);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [messages, setMessages] = useState<Message[]>([GREETING]);
@@ -70,7 +82,11 @@ export default function ChatBot() {
   const last = messages.length - 1;
 
   return (
-    <div className="fixed bottom-5 right-5 z-[110] sm:bottom-6 sm:right-6">
+    <div
+      className={`fixed bottom-4 right-4 z-[110] transition-[opacity,transform] duration-300 sm:bottom-6 sm:right-6 ${
+        pastCover || open ? "opacity-100" : "pointer-events-none translate-y-4 opacity-0"
+      }`}
+    >
       <AnimatePresence>
         {open && (
           <motion.div
@@ -188,7 +204,7 @@ export default function ChatBot() {
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-label={open ? "Close chat" : "Ask about Anchit"}
-        className="group relative grid h-14 w-14 place-items-center rounded-full border border-mist/15 bg-graphite-2 text-mist shadow-[0_16px_40px_-12px_rgba(0,0,0,0.7)] transition-transform hover:scale-105"
+        className="group relative grid h-12 w-12 place-items-center sm:h-14 sm:w-14 rounded-full border border-mist/15 bg-graphite-2 text-mist shadow-[0_16px_40px_-12px_rgba(0,0,0,0.7)] transition-transform hover:scale-105"
       >
         <span className="absolute right-0.5 top-0.5 h-3 w-3 rounded-full border-2 border-graphite-2 bg-oak" aria-hidden="true" />
         {open ? <X className="h-5 w-5" aria-hidden="true" /> : <MessageCircle className="h-5 w-5" aria-hidden="true" />}

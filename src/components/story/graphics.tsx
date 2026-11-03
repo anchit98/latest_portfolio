@@ -98,7 +98,7 @@ export function DotField({ count, cols = 25 }: { count: number; cols?: number })
   return (
     <div ref={ref} className="relative mx-auto grid h-[260px] w-full place-items-center [perspective:1100px] sm:h-[320px]" aria-hidden="true">
       <div
-        className="grid gap-[clamp(6px,1.1vw,11px)] [transform-style:preserve-3d]"
+        className="grid gap-[clamp(6px,1.1vw,11px)] lg:[transform-style:preserve-3d]"
         style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, transform: "rotateX(58deg) rotateZ(-32deg)" }}
       >
         {Array.from({ length: count }, (_, i) => {
@@ -121,30 +121,63 @@ export function DotField({ count, cols = 25 }: { count: number; cols?: number })
   );
 }
 
-/** A chain of steps; chips light up one after another. `struck` renders a crossed-out anti-pattern. */
-export function Flow({ steps, struck = false, size = "md" }: { steps: string[]; struck?: boolean; size?: "md" | "sm" }) {
+/** Down connector between stacked steps on phones. */
+function StepConnector() {
   return (
-    <ol className={`flex flex-wrap items-center gap-x-2 gap-y-2.5 max-sm:justify-center ${size === "sm" ? "text-[12px]" : "text-[13.5px]"}`}>
-      {steps.map((s, i) => (
-        <motion.li
-          key={s}
-          className="flex items-center gap-2"
-          initial={{ opacity: 0, x: -8 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true, margin: "-10% 0px" }}
-          transition={{ duration: 0.6, ease: EASE, delay: 0.15 + i * 0.12 }}
-        >
-          <span
-            className={`rounded-full border px-3 py-1.5 ${
-              struck ? "border-mist/10 text-mist/35 line-through decoration-mist/40" : i === steps.length - 1 ? "border-oak bg-oak text-ink" : "border-mist/20 text-mist/80"
-            }`}
+    <span aria-hidden="true" className="flex h-5 flex-col items-center">
+      <span className="w-px flex-1 bg-oak/50" />
+      <span className="-mt-px h-1.5 w-1.5 rotate-45 border-b border-r border-oak/70" />
+    </span>
+  );
+}
+
+/**
+ * A chain of steps. Wider screens: chips in a row with arrows. Phones: an even vertical stack joined by
+ * connectors, which reads in order instead of wrapping raggedly. `struck` renders a crossed-out anti-pattern,
+ * which on phones collapses to one line so it can't be mistaken for part of a real flow.
+ */
+export function Flow({ steps, struck = false, size = "md" }: { steps: string[]; struck?: boolean; size?: "md" | "sm" }) {
+  const chip = (i: number) =>
+    struck ? "border-mist/10 text-mist/35 line-through decoration-mist/40" : i === steps.length - 1 ? "border-oak bg-oak text-ink" : "border-mist/20 text-mist/80";
+  return (
+    <>
+      {struck ? (
+        <p className="text-center text-[12px] text-mist/35 line-through decoration-mist/40 sm:hidden" aria-label={`Not: ${steps.join(", ")}`}>
+          {steps.join("  →  ")}
+        </p>
+      ) : (
+        <ol className={`mx-auto flex w-full max-w-[260px] flex-col items-stretch sm:hidden ${size === "sm" ? "text-[12px]" : "text-[13.5px]"}`}>
+          {steps.map((s, i) => (
+            <motion.li
+              key={s}
+              className="flex flex-col items-stretch"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true, margin: "-5% 0px" }}
+              transition={{ duration: 0.5, delay: 0.1 + i * 0.08 }}
+            >
+              <span className={`rounded-full border px-4 py-2 text-center ${chip(i)}`}>{s}</span>
+              {i < steps.length - 1 && <StepConnector />}
+            </motion.li>
+          ))}
+        </ol>
+      )}
+      <ol className={`hidden flex-wrap items-center gap-x-2 gap-y-2.5 sm:flex ${size === "sm" ? "text-[12px]" : "text-[13.5px]"}`}>
+        {steps.map((s, i) => (
+          <motion.li
+            key={s}
+            className="flex items-center gap-2"
+            initial={{ opacity: 0, x: -8 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-10% 0px" }}
+            transition={{ duration: 0.6, ease: EASE, delay: 0.15 + i * 0.12 }}
           >
-            {s}
-          </span>
-          {i < steps.length - 1 && <ArrowRight className={`h-3.5 w-3.5 ${struck ? "text-mist/20" : "text-oak/70"}`} aria-hidden="true" />}
-        </motion.li>
-      ))}
-    </ol>
+            <span className={`rounded-full border px-3 py-1.5 ${chip(i)}`}>{s}</span>
+            {i < steps.length - 1 && <ArrowRight className={`h-3.5 w-3.5 ${struck ? "text-mist/20" : "text-oak/70"}`} aria-hidden="true" />}
+          </motion.li>
+        ))}
+      </ol>
+    </>
   );
 }
 
@@ -216,17 +249,23 @@ export function Converge({ inputs, output, detail }: { inputs: string[]; output:
   );
   return (
     <>
-      {/* Narrow screens: inputs wrap, then one flowing connector down into the result */}
+      {/* Phones: an even two-column grid whose two columns merge into one line down to the result */}
       <div className="sm:hidden">
-        <ul className="flex flex-wrap justify-center gap-2">
-          {inputs.map((label) => (
-            <li key={label} className="rounded-full border border-mist/15 px-3 py-1 text-[12px] text-mist/70">
+        <ul className="grid grid-cols-2 gap-2">
+          {inputs.map((label, i) => (
+            <li
+              key={label}
+              className={`grid min-h-10 place-items-center rounded-xl border border-mist/15 bg-graphite/60 px-2 py-2 text-center text-[12px] leading-tight text-mist/75 ${
+                n % 2 === 1 && i === n - 1 ? "col-span-2 mx-auto w-[calc(50%-4px)]" : ""
+              }`}
+            >
               {label}
             </li>
           ))}
         </ul>
-        <svg viewBox="0 0 20 48" className="mx-auto my-1 h-12 w-5" aria-hidden="true">
-          <path d="M10 0 V48" strokeWidth="1.5" strokeDasharray="3 6" className="flow-dash stroke-oak/80" />
+        <svg viewBox="0 0 200 44" preserveAspectRatio="none" className="h-11 w-full" aria-hidden="true">
+          <path d="M50 0 C 50 24, 100 18, 100 44 M150 0 C 150 24, 100 18, 100 44" fill="none" strokeWidth="1" vectorEffect="non-scaling-stroke" className="stroke-mist/20" />
+          <path d="M50 0 C 50 24, 100 18, 100 44 M150 0 C 150 24, 100 18, 100 44" fill="none" strokeWidth="1.5" vectorEffect="non-scaling-stroke" strokeDasharray="3 6" className="flow-dash stroke-oak/80" />
         </svg>
         {result}
       </div>
@@ -298,8 +337,37 @@ export function Realloc({ amount, from, to }: { amount: string; from: string; to
   );
 }
 
-/** Cards stacked in depth that fan out into a pipeline when they scroll into view. */
+/**
+ * A pipeline of steps. From sm up: cards stacked in depth that fan out when they scroll into view.
+ * Phones: a flat 2-column grid of numbered tiles, which keeps icons and labels aligned at small sizes.
+ */
 export function Pipeline3D({ steps }: { steps: { icon: React.ReactNode; label: string }[] }) {
+  return (
+    <>
+      <ol className="grid grid-cols-2 gap-2.5 sm:hidden">
+        {steps.map((s, i) => (
+          <motion.li
+            key={s.label}
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: "-5% 0px" }}
+            transition={{ duration: 0.5, delay: 0.1 + i * 0.07 }}
+            className="relative flex flex-col items-center gap-2.5 rounded-2xl border border-mist/15 bg-graphite px-3 pb-4 pt-5 text-center"
+          >
+            <span className="absolute left-3 top-2.5 font-mono text-[10px] text-oak">{String(i + 1).padStart(2, "0")}</span>
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-oak/15 text-oak [&_svg]:h-[18px] [&_svg]:w-[18px]">{s.icon}</span>
+            <span className="text-[12.5px] font-medium leading-tight">{s.label}</span>
+          </motion.li>
+        ))}
+      </ol>
+      <div className="hidden sm:block">
+        <PipelineDeck steps={steps} />
+      </div>
+    </>
+  );
+}
+
+function PipelineDeck({ steps }: { steps: { icon: React.ReactNode; label: string }[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-15% 0px" });
   const [width, setWidth] = useState(0);

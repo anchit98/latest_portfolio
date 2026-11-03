@@ -60,7 +60,7 @@ export default function Principles() {
         <div className="grid grid-cols-2 gap-5 text-[13.5px]">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-mist/40">AI speeds up</p>
-            <ul className="mt-3 max-sm:list-inside max-sm:pl-0 list-disc space-y-1.5 pl-4 text-mist/60 marker:text-mist/30">
+            <ul className="mt-3 max-sm:mx-auto max-sm:w-fit max-sm:text-left list-disc space-y-1.5 pl-4 text-mist/60 marker:text-mist/30">
               <li>Research</li>
               <li>Documentation</li>
               <li>Prototyping</li>
@@ -68,7 +68,7 @@ export default function Principles() {
           </div>
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-oak">I decide</p>
-            <ul className="mt-3 max-sm:list-inside max-sm:pl-0 list-disc space-y-1.5 pl-4 text-mist/90 marker:text-oak">
+            <ul className="mt-3 max-sm:mx-auto max-sm:w-fit max-sm:text-left list-disc space-y-1.5 pl-4 text-mist/90 marker:text-oak">
               <li>What&apos;s worth solving</li>
               <li>What not to build</li>
               <li>Where autonomy stops</li>

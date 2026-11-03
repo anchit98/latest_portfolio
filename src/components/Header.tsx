@@ -6,7 +6,7 @@ import { motion, AnimatePresence, useMotionValueEvent, useScroll } from "framer-
 import Magnetic from "./Magnetic";
 import Logo from "./Logo";
 
-const RESUME_URL = "https://drive.google.com/file/d/1bNt2ZAid8TBx8o7Vl5tIOGQKbAUJG1B6/view?usp=sharing";
+const RESUME_URL = "https://drive.google.com/file/d/1CRgF6QFg4W6D0oIYvzHJWP7zsTGhvJ0a/view?usp=sharing";
 const NAV = [
   { id: "story", label: "Story" },
   { id: "work", label: "Work" },
@@ -22,6 +22,7 @@ const SOCIALS = [
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const [atTop, setAtTop] = useState(true);
   const [active, setActive] = useState<string | null>(null);
   const { scrollY } = useScroll();
 
@@ -29,6 +30,7 @@ export default function Header() {
   // Direction is measured against the last position that moved past a small dead zone, so smooth-scroll jitter can't flip it.
   const lastY = useRef(0);
   useMotionValueEvent(scrollY, "change", (y) => {
+    setAtTop(y < 60);
     if (y < 120) {
       setHidden(false);
       lastY.current = y;
@@ -72,15 +74,23 @@ export default function Header() {
   return (
     <>
       <motion.header
-        className="fixed inset-x-0 top-0 z-[90] flex items-center justify-between px-5 py-5 text-white mix-blend-difference sm:px-8 lg:px-12 lg:py-7 xl:px-16"
+        // Over the cover it is transparent with ink text (the photo is light behind it). Once the reader
+        // scrolls it becomes a solid bar on every screen, so the name never sits on top of page content.
+        className={`fixed inset-x-0 top-0 z-[90] flex items-center justify-between px-5 transition-[background-color,color,padding] duration-300 sm:px-8 lg:px-12 xl:px-16 ${
+          isMenuOpen
+            ? "py-3.5 text-mist"
+            : atTop
+              ? "py-3.5 text-ink lg:py-7"
+              : "bg-graphite/95 py-3.5 text-mist shadow-[0_10px_30px_-20px_rgba(0,0,0,0.8)] lg:py-4"
+        }`}
         animate={{ y: hidden && !isMenuOpen ? "-110%" : "0%" }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       >
         <a href="#top" aria-label="Back to top" className="group flex items-center gap-3">
-          <Logo className="h-8 w-8" />
-          <span className="relative hidden overflow-hidden font-mono text-[10.5px] uppercase tracking-[0.2em] opacity-60 sm:block">
-            <span className="block transition-transform duration-500 group-hover:-translate-y-full">Portfolio ©2026</span>
-            <span className="absolute block transition-transform duration-500 group-hover:-translate-y-full">Back to top</span>
+          <Logo className="h-9 w-9 shrink-0 transition-transform duration-500 group-hover:-rotate-6" />
+          <span className="flex flex-col leading-none">
+            <span className="text-[15px] font-semibold tracking-[-0.02em]">Anchit Boruah</span>
+            <span className="mt-1 font-mono text-[9.5px] uppercase tracking-[0.2em] opacity-60">Portfolio © 2026</span>
           </span>
         </a>
 
@@ -93,18 +103,18 @@ export default function Header() {
                   <span className="absolute inset-0 block translate-y-full transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-0">{item.label}</span>
                 </span>
                 {active === item.id && (
-                  <motion.span layoutId="nav-dot" className="absolute -bottom-2 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-white" transition={{ type: "spring", stiffness: 400, damping: 32 }} />
+                  <motion.span layoutId="nav-dot" className="absolute -bottom-2 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-current" transition={{ type: "spring", stiffness: 400, damping: 32 }} />
                 )}
               </a>
             ))}
           </nav>
 
-          <Magnetic className="hidden sm:inline-block">
+          <Magnetic>
             <a
               href={RESUME_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex items-center gap-2 rounded-full border border-white/40 px-5 py-2.5 text-sm font-medium transition-colors duration-300 hover:bg-white hover:text-black"
+              className="group flex items-center gap-2 rounded-full border border-current/40 px-4 py-2 text-sm font-medium transition-colors duration-300 sm:px-5 sm:py-2.5 hover:bg-current/10"
               aria-label="View Resume (opens in new tab)"
             >
               Resume
@@ -113,14 +123,14 @@ export default function Header() {
           </Magnetic>
 
           <button
-            className="relative grid h-11 w-11 place-items-center rounded-full border border-white/40 md:hidden"
+            className="relative grid h-10 w-10 place-items-center rounded-full border border-current/40 md:hidden"
             onClick={() => setIsMenuOpen((o) => !o)}
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
             aria-label={isMenuOpen ? "Close menu" : "Open menu"}
           >
-            <span className={`absolute h-px w-4 bg-white transition-transform duration-500 ${isMenuOpen ? "rotate-45" : "-translate-y-[3px]"}`} />
-            <span className={`absolute h-px w-4 bg-white transition-transform duration-500 ${isMenuOpen ? "-rotate-45" : "translate-y-[3px]"}`} />
+            <span className={`absolute h-px w-4 bg-current transition-transform duration-500 ${isMenuOpen ? "rotate-45" : "-translate-y-[3px]"}`} />
+            <span className={`absolute h-px w-4 bg-current transition-transform duration-500 ${isMenuOpen ? "-rotate-45" : "translate-y-[3px]"}`} />
           </button>
         </div>
       </motion.header>

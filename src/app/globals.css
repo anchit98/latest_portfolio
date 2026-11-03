@@ -100,6 +100,7 @@ html.lenis body {
 
 .marquee-track {
   animation: marquee 38s linear infinite;
+  will-change: transform;
 }
 @keyframes marquee {
   to {
@@ -107,20 +108,40 @@ html.lenis body {
   }
 }
 
-/* Daylight drifting across the window side of the portrait. */
+/* Daylight drifting across the window side of the portrait. Moved with transform so it never repaints. */
 .light-sweep {
-  background: linear-gradient(105deg, transparent 30%, rgba(255, 244, 226, 0.55) 48%, rgba(255, 244, 226, 0) 62%);
-  background-size: 260% 100%;
+  overflow: hidden;
+}
+.light-sweep::before {
+  content: "";
+  position: absolute;
+  inset: 0 -100%;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 244, 226, 0.55) 50%, transparent 62%);
   animation: sweep 11s var(--ease-in-out-quart) infinite;
+  will-change: transform;
 }
 @keyframes sweep {
   0%,
   35% {
-    background-position: 120% 0;
+    transform: translate3d(-35%, 0, 0);
   }
   75%,
   100% {
-    background-position: -40% 0;
+    transform: translate3d(35%, 0, 0);
+  }
+}
+
+/* Slow push-in on the phone portrait (transform only). */
+.kenburns {
+  animation: kenburns 18s ease-in-out infinite alternate;
+  transform-origin: 50% 30%;
+}
+@keyframes kenburns {
+  from {
+    transform: scale(1.08);
+  }
+  to {
+    transform: scale(1);
   }
 }
 
@@ -135,9 +156,25 @@ html.lenis body {
   }
   50% {
     translate: 0 0 18px;
-    background-color: #f7dcbd;
   }
 }
+/* Sections far off screen pause their loops (toggled by PauseOffscreen). */
+[data-idle] *,
+[data-idle] *::before,
+[data-idle] *::after {
+  animation-play-state: paused !important;
+}
+
+/* Phones and touch devices: skip full-section grain and the 250-dot wave, which cost frames while scrolling. */
+@media (max-width: 1023px), (pointer: coarse) {
+  .grain::before {
+    display: none;
+  }
+  .dot-wave {
+    animation: none;
+  }
+}
+
 /* Stand-in for a name kept private: a bar with a slow shimmer. */
 .redacted {
   display: inline-block;
@@ -155,6 +192,7 @@ html.lenis body {
 }
 .hero-ring {
   animation: heroring 90s linear infinite;
+  will-change: transform;
 }
 @keyframes heroring {
   to {
@@ -207,7 +245,8 @@ html.lenis body {
     scroll-behavior: auto !important;
   }
   .marquee-track,
-  .light-sweep,
+  .light-sweep::before,
+  .kenburns,
   .hero-ring,
   .redacted {
     animation: none;

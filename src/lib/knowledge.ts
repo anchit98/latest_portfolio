@@ -23,7 +23,7 @@ export const CONTACT = {
   phone: "+91 99109 80793",
   linkedin: "https://linkedin.com/in/anchitboruah/",
   github: "https://github.com/anchit98/",
-  resume: "https://drive.google.com/file/d/1bNt2ZAid8TBx8o7Vl5tIOGQKbAUJG1B6/view?usp=sharing",
+  resume: "https://drive.google.com/file/d/1CRgF6QFg4W6D0oIYvzHJWP7zsTGhvJ0a/view?usp=sharing",
 };
 
 /** Total and product-only experience, calculated from role dates (Jan 2020 and Apr 2022) to today. */

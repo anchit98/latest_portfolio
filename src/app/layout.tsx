@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import ChatBot from "@/components/ChatBot";
 import SmoothScroll from "@/components/SmoothScroll";
 import Cursor from "@/components/Cursor";
+import PauseOffscreen from "@/components/PauseOffscreen";
 
 const geist = Geist({
   variable: "--font-geist",
@@ -69,6 +70,7 @@ export default function RootLayout({
         >
           <SmoothScroll />
           <Cursor />
+          <PauseOffscreen />
           {children}
           <ChatBot />
         </ThemeProvider>
